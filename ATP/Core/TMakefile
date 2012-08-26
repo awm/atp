@@ -1,0 +1,9 @@
+add_premodule static_processors
+
+module { c }
+
+set link::PROJLIBS {
+    ATP/Common
+    ATP/Processors/Help
+    ATP/Processors/Print
+}

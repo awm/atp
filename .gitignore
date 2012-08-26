@@ -1,0 +1,36 @@
+## general ignore entries ##
+__build__/
+__test__/
+.DS_Store
+*.pyc
+*.pyo
+*.pyd
+*.pyz
+*.dylib
+*.so
+*.dll
+*db-journal
+*.new
+.svn/
+CVS/
+database_backups
+revision.h
+.gdb_history
+*.egg-info
+*.dat
+*.der
+*.csr
+*.pem
+*.key
+*.pkg
+*.mpkg
+*.o
+*.dmg
+*.egg
+*.sublime-workspace
+*.toc
+
+## directory-specific ignore entries ##
+
+## things not to ignore
+!.gitignore

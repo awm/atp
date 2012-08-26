@@ -1,0 +1,4 @@
+module { vcs c }
+
+set c::DEFINES(VERSION)     "\"[vcs::get_version]\""
+set c::DEFINES(REVISION)    "\"[vcs::get_revision]\""

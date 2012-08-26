@@ -137,3 +137,19 @@ int ATP_processorHelpRequested(void)
 {
     return gs_helpRequested;
 }
+
+/* Function: ATP_processorsList
+List the available processors.
+*/
+void ATP_processorsList(void)
+{
+    unsigned int i;
+
+    // TODO: print shared library processors
+
+    LOG("Internal Processors:\n");
+    for (i = 0; i < ARRAYLEN(gs_staticProcessors); ++i)
+    {
+        LOG("    %s\n", gs_staticProcessors[i].m_name);
+    }
+}

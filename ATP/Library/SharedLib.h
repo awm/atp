@@ -1,8 +1,8 @@
 /* File: SharedLib.h
 Generic interface for loading symbols from shared libraries.
 */
-#ifndef _ATP_COMMON_SHAREDLIB_H_
-#define _ATP_COMMON_SHAREDLIB_H_
+#ifndef _ATP_LIBRARY_SHAREDLIB_H_
+#define _ATP_LIBRARY_SHAREDLIB_H_
 
 #include "Export.h"
 
@@ -35,4 +35,4 @@ Paramters:
 */
 EXPORT void ATP_sharedLibUnload(void *p_lib);
 
-#endif /* _ATP_COMMON_SHAREDLIB_H_ */
+#endif /* _ATP_LIBRARY_SHAREDLIB_H_ */

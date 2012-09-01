@@ -236,8 +236,13 @@ int ATP_dictionaryGetUint(ATP_Dictionary *p_dict, const char *p_key, unsigned lo
         return 0;
     }
 
-    *p_value = l_entry->m_value.m_value.m_uint;
-    return 1;
+    if (l_entry->m_value.m_type == e_ATP_ValueType_uint)
+    {
+        *p_value = l_entry->m_value.m_value.m_uint;
+        return 1;
+    }
+
+    return 0;
 }
 
 int ATP_dictionaryGetInt(ATP_Dictionary *p_dict, const char *p_key, signed long long *p_value)
@@ -249,8 +254,13 @@ int ATP_dictionaryGetInt(ATP_Dictionary *p_dict, const char *p_key, signed long 
         return 0;
     }
 
-    *p_value = l_entry->m_value.m_value.m_int;
-    return 1;
+    if (l_entry->m_value.m_type == e_ATP_ValueType_int)
+    {
+        *p_value = l_entry->m_value.m_value.m_int;
+        return 1;
+    }
+
+    return 0;
 }
 
 int ATP_dictionaryGetDouble(ATP_Dictionary *p_dict, const char *p_key, double *p_value)
@@ -262,8 +272,13 @@ int ATP_dictionaryGetDouble(ATP_Dictionary *p_dict, const char *p_key, double *p
         return 0;
     }
 
-    *p_value = l_entry->m_value.m_value.m_double;
-    return 1;
+    if (l_entry->m_value.m_type == e_ATP_ValueType_double)
+    {
+        *p_value = l_entry->m_value.m_value.m_double;
+        return 1;
+    }
+
+    return 0;
 }
 
 int ATP_dictionaryGetBool(ATP_Dictionary *p_dict, const char *p_key, int *p_value)
@@ -275,6 +290,11 @@ int ATP_dictionaryGetBool(ATP_Dictionary *p_dict, const char *p_key, int *p_valu
         return 0;
     }
 
-    *p_value = l_entry->m_value.m_value.m_bool;
-    return 1;
+    if (l_entry->m_value.m_type == e_ATP_ValueType_bool)
+    {
+        *p_value = l_entry->m_value.m_value.m_bool;
+        return 1;
+    }
+
+    return 0;
 }

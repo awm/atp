@@ -1,8 +1,8 @@
 /* File: Log.h
 Simple logging functionality for ATP.
 */
-#ifndef _ATP_COMMON_LOG_H_
-#define _ATP_COMMON_LOG_H_
+#ifndef _ATP_LIBRARY_LOG_H_
+#define _ATP_LIBRARY_LOG_H_
 
 #include "Export.h"
 
@@ -62,4 +62,4 @@ Parameters:
 */
 EXPORT void ATP_logDbg(const char *p_file, unsigned int p_line, const char *p_format, ...);
 
-#endif /* _ATP_COMMON_LOG_H_ */
+#endif /* _ATP_LIBRARY_LOG_H_ */

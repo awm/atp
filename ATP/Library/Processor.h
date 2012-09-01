@@ -1,8 +1,8 @@
 /* File: Processor.h
 Definition of the template processor interface.
 */
-#ifndef _ATP_CORE_PROCESSOR_H_
-#define _ATP_CORE_PROCESSOR_H_
+#ifndef _ATP_LIBRARY_PROCESSOR_H_
+#define _ATP_LIBRARY_PROCESSOR_H_
 
 #include "CommandLine.h"
 #include "Export.h"
@@ -130,4 +130,4 @@ Returns:
 */
 EXPORT int ATP_processorHelpRequested(void);
 
-#endif /* _ATP_CORE_PROCESSOR_H_ */
+#endif /* _ATP_LIBRARY_PROCESSOR_H_ */

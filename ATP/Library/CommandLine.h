@@ -1,8 +1,8 @@
 /* File: CommandLine.h
 Command line parsing routines for ATP.
 */
-#ifndef _ATP_CORE_COMMANDLINE_H_
-#define _ATP_CORE_COMMANDLINE_H_
+#ifndef _ATP_LIBRARY_COMMANDLINE_H_
+#define _ATP_LIBRARY_COMMANDLINE_H_
 
 #include "Export.h"
 
@@ -38,4 +38,4 @@ Returns:
 */
 EXPORT int ATP_commandLineGet(int argc, char **argv, int p_proc, char **p_name, ATP_CmdLineParam **p_parameters);
 
-#endif /* _ATP_CORE_COMMANDLINE_H_ */
+#endif /* _ATP_LIBRARY_COMMANDLINE_H_ */

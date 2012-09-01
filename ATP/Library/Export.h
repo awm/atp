@@ -1,8 +1,8 @@
 /* File: Export.h
 Macros for setting the visiblility of functions.
 */
-#ifndef _ATP_COMMON_EXPORT_H_
-#define _ATP_COMMON_EXPORT_H_
+#ifndef _ATP_LIBRARY_EXPORT_H_
+#define _ATP_LIBRARY_EXPORT_H_
 
 /* Macro: EXPORT
 Declare that a function should be exported from the module into which it was linked.
@@ -17,4 +17,4 @@ Declare that a function should be exported from the module into which it was lin
     #define EXPORT
 #endif
 
-#endif /* _ATP_COMMON_EXPORT_H_ */
+#endif /* _ATP_LIBRARY_EXPORT_H_ */

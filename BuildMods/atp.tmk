@@ -1,0 +1,12 @@
+namespace eval c {}
+namespace eval cxx {}
+namespace eval link {}
+
+module { dep }
+
+set atppath [file join ATP Library]
+lappend dep::PROJLIBS $atppath
+lappend c::PROJINCS [file join $::PROJROOT $atppath]
+lappend cxx::PROJINCS [file join $::PROJROOT $atppath]
+lappend link::LIBPATH [file join $::PROJROOT $atppath [tmk_named_output_dir]]
+lappend link::SYSLIBS atp

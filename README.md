@@ -16,7 +16,7 @@ Display help for the `random` and `print` processors:
 
 Generate a random dictionary and print it:
 
-    atp @random 5 10 @print
+    atp @random 5 10 2 @print
 
 Load JSON file `some_data.json` and use its data together with the ctemplate template `my_template.tpl` to produce `output.txt`:
 

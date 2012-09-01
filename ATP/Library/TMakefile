@@ -1,0 +1,3 @@
+module { c dynamiclib }
+
+setLibName [filename_shlib atp]

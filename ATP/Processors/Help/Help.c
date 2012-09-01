@@ -1,5 +1,5 @@
-#include "ATP/Core/Processor.h"
-#include "ATP/Common/Log.h"
+#include "ATP/Library/Processor.h"
+#include "ATP/Library/Log.h"
 
 #include <stdlib.h>
 
@@ -15,13 +15,15 @@ extern void ATP_processorsList(void);
 
 static void usage(void)
 {
-    LOG("atp v%s %s (%s)\n\n", VERSION, __DATE__, REVISION);
-    LOG("Usage: atp @<processor> [processor args] [@<processor> [processor args] ...]\n\n");
+    LOG(
+"atp v" VERSION " (" REVISION ") " __DATE__ "\n\n");
+    LOG(
+"Usage: atp @<processor> [processor args] [@<processor> [processor args] ...]\n\n");
 
     ATP_processorsList();
 }
 
-static int run(int p_count, const ATP_Dictionary *p_input, ATP_Dictionary **p_output, void *p_token)
+static int run(int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output, void *p_token)
 {
     if (p_count == 1)
     {

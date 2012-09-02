@@ -43,6 +43,21 @@ typedef enum ATP_ValueType
 Reference to a dictionary implementation.
 */
 typedef struct ATP_DictionaryImpl *ATP_Dictionary;
+/* Type: ATP_DictionaryIterator
+Iterator type for traversing a dictionary's entries.
+*/
+typedef struct ATP_DictionaryImpl *ATP_DictionaryIterator;
+
+/* Function: ATP_valueTypeToString
+Convert a value type into a human readable name.
+
+Parameters:
+    p_type - The type enum value.
+
+Returns:
+    The coresponding name.
+*/
+EXPORT const char *ATP_valueTypeToString(ATP_ValueType p_type);
 
 /* Function: ATP_dictionaryInit
 Initialize a dictionary instance.
@@ -190,5 +205,161 @@ Returns:
     1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
 */
 EXPORT int ATP_dictionaryGetBool(ATP_Dictionary *p_dict, const char *p_key, int *p_value);
+
+/* Function: ATP_dictionaryBegin
+Create an iterator pointing to the beginning of a dictionary.
+
+Parameters:
+    p_dict - The dictionary to iterate over.
+
+Returns:
+    An interator instance.
+*/
+EXPORT ATP_DictionaryIterator ATP_dictionaryBegin(ATP_Dictionary *p_dict);
+/* Function: ATP_dictionaryHasNext
+Determine if there is another dictionary entry that the iterator can advance to.
+
+Parameters:
+    p_iterator - The iterator instance.
+
+Returns:
+    1 if there is a next entry, 0 if there are no more entries.
+*/
+EXPORT int ATP_dictionaryHasNext(ATP_DictionaryIterator p_iterator);
+/* Function: ATP_dictionaryNext
+Advance the iterator to the next item in the dictionary.
+
+Parameters:
+    p_iterator - The iterator instance.
+
+Returns:
+    The iterator advanced by one position.  This will be NULL if there are no more items to iterate over.
+*/
+EXPORT ATP_DictionaryIterator ATP_dictionaryNext(ATP_DictionaryIterator p_iterator);
+/* Function: ATP_dictionaryErase
+Erase the current entry and advance the iterator to the next item in the dictionary.
+
+Parameters:
+    p_dict     - The dictionary handle.
+    p_iterator - The iterator instance.
+
+Returns:
+    The iterator advanced by one position.  This will be NULL if there are no more items to iterate over.
+*/
+EXPORT ATP_DictionaryIterator ATP_dictionaryErase(ATP_Dictionary *p_dict, ATP_DictionaryIterator p_iterator);
+/* Function: ATP_dictionaryGetKey
+Get the dictionary key for the current entry.
+
+Parameters:
+    p_iterator - The iterator instance.
+
+Returns:
+    The key string of the currently referenced entry.
+*/
+EXPORT const char *ATP_dictionaryGetKey(ATP_DictionaryIterator p_iterator);
+/* Function: ATP_dictionaryGetType
+Get the dictionary value type for the current entry.
+
+Parameters:
+    p_iterator - The iterator instance.
+
+Returns:
+    The type of the currently referenced entry.
+*/
+EXPORT ATP_ValueType ATP_dictionaryGetType(ATP_DictionaryIterator p_iterator);
+
+/* Function: ATP_dictionaryItSetUint
+Set the value of a given entry to be the provided unsigned integer value.  The entry is created if it does not exist.
+If it does exist then the old value and type are discarded and replaced with the new ones.
+
+Parameters:
+    p_iterator - The iterator pointing to the entry.
+    p_value    - The value to store in the dictionary entry.
+
+Returns:
+    1 on success, 0 on failure.
+*/
+EXPORT int ATP_dictionaryItSetUint(ATP_DictionaryIterator p_iterator, unsigned long long p_value);
+/* Function: ATP_dictionaryItSetInt
+Set the value of a given entry to be the provided signed integer value.  The entry is created if it does not exist.
+If it does exist then the old value and type are discarded and replaced with the new ones.
+
+Parameters:
+    p_iterator - The iterator pointing to the entry.
+    p_value    - The value to store in the dictionary entry.
+
+Returns:
+    1 on success, 0 on failure.
+*/
+EXPORT int ATP_dictionaryItSetInt(ATP_DictionaryIterator p_iterator, signed long long p_value);
+/* Function: ATP_dictionaryItSetDouble
+Set the value of a given entry to be the provided floating point value.  The entry is created if it does not exist.
+If it does exist then the old value and type are discarded and replaced with the new ones.
+
+Parameters:
+    p_iterator - The iterator pointing to the entry.
+    p_value    - The value to store in the dictionary entry.
+
+Returns:
+    1 on success, 0 on failure.
+*/
+EXPORT int ATP_dictionaryItSetDouble(ATP_DictionaryIterator p_iterator, double p_value);
+/* Function: ATP_dictionaryItSetBool
+Set the value of a given entry to be the provided boolean value.  The entry is created if it does not exist.
+If it does exist then the old value and type are discarded and replaced with the new ones.
+
+Parameters:
+    p_iterator - The iterator pointing to the entry.
+    p_value    - The value to store in the dictionary entry.
+
+Returns:
+    1 on success, 0 on failure.
+*/
+EXPORT int ATP_dictionaryItSetBool(ATP_DictionaryIterator p_iterator, int p_value);
+
+/* Function: ATP_dictionaryItGetUint
+Get the value of a given unsigned integer entry.
+
+Parameters:
+    p_iterator - The iterator pointing to the entry.
+    p_value    - The location to store the value from the dictionary entry in.
+
+Returns:
+    1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
+*/
+EXPORT int ATP_dictionaryItGetUint(ATP_DictionaryIterator p_iterator, unsigned long long *p_value);
+/* Function: ATP_dictionaryItGetInt
+Get the value of a given signed integer entry.
+
+Parameters:
+    p_iterator - The iterator pointing to the entry.
+    p_value    - The location to store the value from the dictionary entry in.
+
+Returns:
+    1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
+*/
+EXPORT int ATP_dictionaryItGetInt(ATP_DictionaryIterator p_iterator, signed long long *p_value);
+/* Function: ATP_dictionaryItGetDouble
+Get the value of a given floating point entry.
+
+Parameters:
+    p_iterator - The iterator pointing to the entry.
+    p_value    - The location to store the value from the dictionary entry in.
+
+Returns:
+    1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
+*/
+EXPORT int ATP_dictionaryItGetDouble(ATP_DictionaryIterator p_iterator, double *p_value);
+/* Function: ATP_dictionaryItGetBool
+Get the value of a given boolean entry.
+
+Parameters:
+    p_iterator - The iterator pointing to the entry.
+    p_value    - The location to store the value from the dictionary entry in.
+
+Returns:
+    1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
+*/
+EXPORT int ATP_dictionaryItGetBool(ATP_DictionaryIterator p_iterator, int *p_value);
 
 #endif /* _ATP_LIBRARY_DICTIONARY_H_ */

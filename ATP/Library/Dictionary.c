@@ -29,6 +29,23 @@ typedef struct ATP_DictionaryImpl
     UT_hash_handle hh;
 } ATP_DictionaryImpl;
 
+const char *ATP_valueTypeToString(ATP_ValueType p_type)
+{
+    switch (p_type)
+    {
+        case e_ATP_ValueType_none:      return "none";
+        case e_ATP_ValueType_string:    return "string";
+        case e_ATP_ValueType_uint:      return "unsigned integer";
+        case e_ATP_ValueType_int:       return "integer";
+        case e_ATP_ValueType_double:    return "double";
+        case e_ATP_ValueType_bool:      return "boolean";
+        case e_ATP_ValueType_dict:      return "dictionary";
+        case e_ATP_ValueType_array:     return "array";
+    }
+
+    return "<unknown>";
+}
+
 void ATP_dictionaryInit(ATP_Dictionary *p_dict)
 {
     *p_dict = NULL;
@@ -44,6 +61,8 @@ static void changeValueType(ATP_DictionaryImpl *p_entry, ATP_ValueType p_newType
             default:
                 break;
         }
+
+        p_entry->m_value.m_type = p_newType;
     }
 }
 
@@ -72,9 +91,7 @@ void ATP_dictionaryRemove(ATP_Dictionary *p_dict, const char *p_key)
     if (l_entry != NULL)
     {
         // remove existing entry
-        HASH_DEL(*p_dict, l_entry);
-        changeValueType(l_entry, e_ATP_ValueType_none);
-        free(l_entry);
+        ATP_dictionaryErase(p_dict, l_entry);
     }
 }
 
@@ -162,12 +179,11 @@ int ATP_dictionarySetUint(ATP_Dictionary *p_dict, const char *p_key, unsigned lo
         {
             return 0;
         }
+
+        HASH_ADD_STR(*p_dict, m_key, l_entry);
     }
 
-    changeValueType(l_entry, e_ATP_ValueType_uint);
-    l_entry->m_value.m_value.m_uint = p_value;
-    HASH_ADD_STR(*p_dict, m_key, l_entry);
-    return 1;
+    return ATP_dictionaryItSetUint(l_entry, p_value);
 }
 
 int ATP_dictionarySetInt(ATP_Dictionary *p_dict, const char *p_key, signed long long p_value)
@@ -181,12 +197,11 @@ int ATP_dictionarySetInt(ATP_Dictionary *p_dict, const char *p_key, signed long 
         {
             return 0;
         }
+
+        HASH_ADD_STR(*p_dict, m_key, l_entry);
     }
 
-    changeValueType(l_entry, e_ATP_ValueType_int);
-    l_entry->m_value.m_value.m_int = p_value;
-    HASH_ADD_STR(*p_dict, m_key, l_entry);
-    return 1;
+    return ATP_dictionaryItSetInt(l_entry, p_value);
 }
 
 int ATP_dictionarySetDouble(ATP_Dictionary *p_dict, const char *p_key, double p_value)
@@ -200,12 +215,11 @@ int ATP_dictionarySetDouble(ATP_Dictionary *p_dict, const char *p_key, double p_
         {
             return 0;
         }
+
+        HASH_ADD_STR(*p_dict, m_key, l_entry);
     }
 
-    changeValueType(l_entry, e_ATP_ValueType_double);
-    l_entry->m_value.m_value.m_double = p_value;
-    HASH_ADD_STR(*p_dict, m_key, l_entry);
-    return 1;
+    return ATP_dictionaryItSetDouble(l_entry, p_value);
 }
 
 int ATP_dictionarySetBool(ATP_Dictionary *p_dict, const char *p_key, int p_value)
@@ -219,12 +233,11 @@ int ATP_dictionarySetBool(ATP_Dictionary *p_dict, const char *p_key, int p_value
         {
             return 0;
         }
+
+        HASH_ADD_STR(*p_dict, m_key, l_entry);
     }
 
-    changeValueType(l_entry, e_ATP_ValueType_bool);
-    l_entry->m_value.m_value.m_bool = p_value;
-    HASH_ADD_STR(*p_dict, m_key, l_entry);
-    return 1;
+    return ATP_dictionaryItSetBool(l_entry, p_value);
 }
 
 int ATP_dictionaryGetUint(ATP_Dictionary *p_dict, const char *p_key, unsigned long long *p_value)
@@ -236,13 +249,7 @@ int ATP_dictionaryGetUint(ATP_Dictionary *p_dict, const char *p_key, unsigned lo
         return 0;
     }
 
-    if (l_entry->m_value.m_type == e_ATP_ValueType_uint)
-    {
-        *p_value = l_entry->m_value.m_value.m_uint;
-        return 1;
-    }
-
-    return 0;
+    return ATP_dictionaryItGetUint(l_entry, p_value);
 }
 
 int ATP_dictionaryGetInt(ATP_Dictionary *p_dict, const char *p_key, signed long long *p_value)
@@ -254,13 +261,7 @@ int ATP_dictionaryGetInt(ATP_Dictionary *p_dict, const char *p_key, signed long 
         return 0;
     }
 
-    if (l_entry->m_value.m_type == e_ATP_ValueType_int)
-    {
-        *p_value = l_entry->m_value.m_value.m_int;
-        return 1;
-    }
-
-    return 0;
+    return ATP_dictionaryItGetInt(l_entry, p_value);
 }
 
 int ATP_dictionaryGetDouble(ATP_Dictionary *p_dict, const char *p_key, double *p_value)
@@ -272,13 +273,7 @@ int ATP_dictionaryGetDouble(ATP_Dictionary *p_dict, const char *p_key, double *p
         return 0;
     }
 
-    if (l_entry->m_value.m_type == e_ATP_ValueType_double)
-    {
-        *p_value = l_entry->m_value.m_value.m_double;
-        return 1;
-    }
-
-    return 0;
+    return ATP_dictionaryItGetDouble(l_entry, p_value);
 }
 
 int ATP_dictionaryGetBool(ATP_Dictionary *p_dict, const char *p_key, int *p_value)
@@ -290,9 +285,115 @@ int ATP_dictionaryGetBool(ATP_Dictionary *p_dict, const char *p_key, int *p_valu
         return 0;
     }
 
-    if (l_entry->m_value.m_type == e_ATP_ValueType_bool)
+    return ATP_dictionaryItGetBool(l_entry, p_value);
+}
+
+ATP_DictionaryIterator ATP_dictionaryBegin(ATP_Dictionary *p_dict)
+{
+    return *p_dict;
+}
+
+int ATP_dictionaryHasNext(ATP_DictionaryIterator p_iterator)
+{
+    return (p_iterator != NULL);
+}
+
+ATP_DictionaryIterator ATP_dictionaryNext(ATP_DictionaryIterator p_iterator)
+{
+    return p_iterator->hh.next;
+}
+
+ATP_DictionaryIterator ATP_dictionaryErase(ATP_Dictionary *p_dict, ATP_DictionaryIterator p_iterator)
+{
+    ATP_DictionaryIterator l_next = p_iterator->hh.next;
+
+    HASH_DEL(*p_dict, p_iterator);
+    changeValueType(p_iterator, e_ATP_ValueType_none);
+    free(p_iterator);
+
+    return l_next;
+}
+
+const char *ATP_dictionaryGetKey(ATP_DictionaryIterator p_iterator)
+{
+    return p_iterator->m_key;
+}
+
+ATP_ValueType ATP_dictionaryGetType(ATP_DictionaryIterator p_iterator)
+{
+    return p_iterator->m_value.m_type;
+}
+
+int ATP_dictionaryItSetUint(ATP_DictionaryIterator p_iterator, unsigned long long p_value)
+{
+    DBG("setting '%s': %llu\n", p_iterator->m_key, p_value);
+    changeValueType(p_iterator, e_ATP_ValueType_uint);
+    p_iterator->m_value.m_value.m_uint = p_value;
+    return 1;
+}
+
+int ATP_dictionaryItSetInt(ATP_DictionaryIterator p_iterator, signed long long p_value)
+{
+    DBG("setting '%s': %lld\n", p_iterator->m_key, p_value);
+    changeValueType(p_iterator, e_ATP_ValueType_int);
+    p_iterator->m_value.m_value.m_int = p_value;
+    return 1;
+}
+
+int ATP_dictionaryItSetDouble(ATP_DictionaryIterator p_iterator, double p_value)
+{
+    DBG("setting '%s': %f\n", p_iterator->m_key, p_value);
+    changeValueType(p_iterator, e_ATP_ValueType_double);
+    p_iterator->m_value.m_value.m_double = p_value;
+    return 1;
+}
+
+int ATP_dictionaryItSetBool(ATP_DictionaryIterator p_iterator, int p_value)
+{
+    DBG("setting '%s': %s\n", p_iterator->m_key, (p_value ? "true" : "false"));
+    changeValueType(p_iterator, e_ATP_ValueType_bool);
+    p_iterator->m_value.m_value.m_bool = (p_value != 0);
+    return 1;
+}
+
+int ATP_dictionaryItGetUint(ATP_DictionaryIterator p_iterator, unsigned long long *p_value)
+{
+    if (p_iterator->m_value.m_type == e_ATP_ValueType_uint)
     {
-        *p_value = l_entry->m_value.m_value.m_bool;
+        *p_value = p_iterator->m_value.m_value.m_uint;
+        return 1;
+    }
+
+    return 0;
+}
+
+int ATP_dictionaryItGetInt(ATP_DictionaryIterator p_iterator, signed long long *p_value)
+{
+    if (p_iterator->m_value.m_type == e_ATP_ValueType_int)
+    {
+        *p_value = p_iterator->m_value.m_value.m_int;
+        return 1;
+    }
+
+    return 0;
+}
+
+int ATP_dictionaryItGetDouble(ATP_DictionaryIterator p_iterator, double *p_value)
+{
+    if (p_iterator->m_value.m_type == e_ATP_ValueType_double)
+    {
+        *p_value = p_iterator->m_value.m_value.m_double;
+        return 1;
+    }
+
+    return 0;
+}
+
+int ATP_dictionaryItGetBool(ATP_DictionaryIterator p_iterator, int *p_value)
+{
+    if (p_iterator->m_value.m_type == e_ATP_ValueType_bool)
+    {
+        *p_value = p_iterator->m_value.m_value.m_bool;
         return 1;
     }
 

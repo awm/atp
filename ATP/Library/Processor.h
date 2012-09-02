@@ -57,6 +57,10 @@ The interface for interacting with a loaded processor.
 */
 typedef struct ATP_ProcessorInterface
 {
+    /* Variable: m_name
+    The name of the processor.
+    */
+    char m_name[128];
     /* Variable: m_token
     Arbitrary data set by the processor.
     */

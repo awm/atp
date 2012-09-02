@@ -1,19 +1,39 @@
 add_premodule static_processors
 
-module { c atp }
+module { c atp dep }
 
 set link::PROJLIBS {
     ATP/Processors/Help
     ATP/Processors/Random
 }
 
+set dep::PROJLIBS {
+    ATP/Processors/JSON
+}
+
 when_target osx {
     set rule {
         set runlibdirs [join [lsort -unique $link::LIBPATH] ":"]
+        set procpath [file join $::PROJROOT ATP Processors * [tmk_named_output_dir]]
         set wrapper "#!/bin/sh
+
+proc_paths() {
+    for P in \$procpath; do
+        printf \\\${P}:
+    done
+}
+
+export ATP_PROCESSOR_PATH=`proc_paths`
 export DYLD_LIBRARY_PATH=\${runlibdirs}:\\\$DYLD_LIBRARY_PATH
-prefix=`dirname \\\${0}`
-\\\${prefix}/atp \\"\\\${@}\\"
+PREFIX=`dirname \\\${0}`
+
+GDBCMD=
+if \\\[ [get_attr GDB 0] -eq 1 ]; then
+    echo 'run' > \\"\\\${PREFIX}/atp.gdb\\"
+    GDBCMD=\\"gdb -quiet -command=\\\${PREFIX}/atp.gdb --args\\"
+fi
+
+\\\$GDBCMD \\\${PREFIX}/atp \\"\\\${@}\\"
 "
         write_file \$TARGET wrapper
         file attributes \$TARGET -permissions rwxr-xr-x

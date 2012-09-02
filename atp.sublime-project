@@ -10,7 +10,8 @@
     {
         "sublimeclang_options":
         [
-            "-I${folder:${project_path:atp.sublime-project}}"
+            "-I${folder:${project_path:atp.sublime-project}}",
+            "-DJSON_DEBUG"
         ]
     }
 }

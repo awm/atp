@@ -1,8 +1,12 @@
 # ATP
 
+This document contains some preliminary musings and may not accurately reflect the state of the code at the moment.
+
 ## Usage
 
     atp @<processor> [processor args] [@<processor> [processor args] ...]
+
+The `ATP_PROCESSOR_PATH` environment variable may be used to specify multiple alternative directories to search for processors in, overriding the built-in default.  The paths are separated by colons.  Empty paths are ignored.
 
 ## Examples
 

@@ -2,8 +2,10 @@ namespace eval c {}
 namespace eval cxx {}
 namespace eval link {}
 
-set libjsonpath [file join $::PROJROOT ATP ThirdParty libjson]
-lappend c::PROJINCS $libjsonpath
-lappend cxx::PROJINCS $libjsonpath
-lappend link::LIBPATH [file join $libjsonpath $::TARGET_OS $::TARGET_ARCH]
-lappend link::SYSLIBS json
+lappend link::LIBPATH [file join $::PROJROOT ATP ThirdParty libjson $::TARGET_OS $::TARGET_ARCH]
+lconcat link::SYSLIBS { json stdc++ }
+
+if { $::CODELEVEL == "dbg" } {
+    set c::DEFINES(JSON_DEBUG)      1
+    set cxx::DEFINES(JSON_DEBUG)    1
+}

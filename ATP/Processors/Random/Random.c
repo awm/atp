@@ -105,67 +105,87 @@ static void randomString(char p_buffer[c_ATP_Dictionary_keySize + 1])
     }
 }
 
+static int randomDictionary(ATP_Dictionary *p_dict, const Settings *p_settings, unsigned int p_depth)
+{
+    unsigned int l_entries = randomUint(p_settings->m_minEntries, p_settings->m_maxEntries + 1);
+    while (l_entries-- > 0)
+    {
+        char l_key[c_ATP_Dictionary_keySize + 1];
+        char l_randStr[c_ATP_Dictionary_keySize + 1];
+        ATP_Dictionary l_randDict;
+        randomString(l_key);
+
+        switch (randomUint(e_ATP_ValueType_string, e_ATP_ValueType_array))
+        {
+            // TODO: add other types
+            case e_ATP_ValueType_string:
+                randomString(l_randStr);
+                if (!ATP_dictionarySetString(p_dict, l_key, l_randStr))
+                {
+                    return 0;
+                }
+                break;
+            case e_ATP_ValueType_uint:
+                if (!ATP_dictionarySetUint(p_dict, l_key, randomUint(0, ULLONG_MAX)))
+                {
+                    return 0;
+                }
+                break;
+            case e_ATP_ValueType_int:
+                if (!ATP_dictionarySetInt(p_dict, l_key, randomInt(LLONG_MIN, LLONG_MAX)))
+                {
+                    return 0;
+                }
+                break;
+            case e_ATP_ValueType_double:
+                if (!ATP_dictionarySetDouble(p_dict, l_key, randomDouble()))
+                {
+                    return 0;
+                }
+                break;
+            case e_ATP_ValueType_bool:
+                if (!ATP_dictionarySetBool(p_dict, l_key, randomBool()))
+                {
+                    return 0;
+                }
+                break;
+            case e_ATP_ValueType_dict:
+                ATP_dictionaryInit(&l_randDict);
+                if (p_depth + 1 < p_settings->m_maxDepth)
+                {
+                    if (!randomDictionary(&l_randDict, p_settings, p_depth + 1))
+                    {
+                        ATP_dictionaryDestroy(&l_randDict);
+                        return 0;
+                    }
+                }
+                if (!ATP_dictionarySetDict(p_dict, l_key, l_randDict))
+                {
+                    ATP_dictionaryDestroy(&l_randDict);
+                    return 0;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    DBG("finished creating random dictionary\n");
+    return 1;
+}
+
 static int run(int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output, void *p_token)
 {
     Settings *l_settings = p_token;
-
     if (ATP_processorHelpRequested())
     {
         usage();
     }
     else
     {
-        unsigned int l_entries;
-        time_t l_now = time(NULL);
-        srand(l_now);
-
-        l_entries = randomUint(l_settings->m_minEntries, l_settings->m_maxEntries + 1);
-        while (l_entries-- > 0)
-        {
-            char l_key[c_ATP_Dictionary_keySize + 1];
-            char l_randStr[c_ATP_Dictionary_keySize + 1];
-            randomString(l_key);
-
-            switch (randomUint(e_ATP_ValueType_string, e_ATP_ValueType_array))
-            {
-                // TODO: add other types
-                case e_ATP_ValueType_string:
-                    randomString(l_randStr);
-                    if (!ATP_dictionarySetString(p_output, l_key, l_randStr))
-                    {
-                        return 0;
-                    }
-                    break;
-                case e_ATP_ValueType_uint:
-                    if (!ATP_dictionarySetUint(p_output, l_key, randomUint(0, ULLONG_MAX)))
-                    {
-                        return 0;
-                    }
-                    break;
-                case e_ATP_ValueType_int:
-                    if (!ATP_dictionarySetInt(p_output, l_key, randomInt(LLONG_MIN, LLONG_MAX)))
-                    {
-                        return 0;
-                    }
-                    break;
-                case e_ATP_ValueType_double:
-                    if (!ATP_dictionarySetDouble(p_output, l_key, randomDouble()))
-                    {
-                        return 0;
-                    }
-                    break;
-                case e_ATP_ValueType_bool:
-                default:
-                    if (!ATP_dictionarySetBool(p_output, l_key, randomBool()))
-                    {
-                        return 0;
-                    }
-                    break;
-            }
-        }
+        return randomDictionary(p_output, l_settings, 0);
     }
 
-    DBG("finished creating random dictionary\n");
     return 1;
 }
 

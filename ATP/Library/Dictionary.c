@@ -17,7 +17,7 @@ typedef struct Value
         signed long long m_int;
         double m_double;
         int m_bool;
-        //struct ATP_DictionaryEntry *m_dict;
+        ATP_Dictionary m_dict;
         //UT_array *m_array;
     } m_value;
 } Value;
@@ -61,6 +61,9 @@ static void changeValueType(ATP_DictionaryImpl *p_entry, ATP_ValueType p_newType
             case e_ATP_ValueType_string:
                 utstring_done(&p_entry->m_value.m_value.m_string);
                 break;
+            case e_ATP_ValueType_dict:
+                ATP_dictionaryDestroy(&p_entry->m_value.m_value.m_dict);
+                break;
             default:
                 break;
         }
@@ -71,6 +74,9 @@ static void changeValueType(ATP_DictionaryImpl *p_entry, ATP_ValueType p_newType
             // TODO: add support for other types
             case e_ATP_ValueType_string:
                 utstring_init(&p_entry->m_value.m_value.m_string);
+                break;
+            case e_ATP_ValueType_dict:
+                ATP_dictionaryInit(&p_entry->m_value.m_value.m_dict);
                 break;
             default:
                 break;
@@ -156,7 +162,6 @@ ATP_Dictionary ATP_dictionaryDuplicate(ATP_Dictionary *p_dict)
             {
                 // TODO: add support for other types
                 case e_ATP_ValueType_string:
-                    utstring_clear(&l_copy->m_value.m_value.m_string);
                     utstring_concat(&l_copy->m_value.m_value.m_string, &it->m_value.m_value.m_string);
                     break;
                 case e_ATP_ValueType_uint:
@@ -171,6 +176,9 @@ ATP_Dictionary ATP_dictionaryDuplicate(ATP_Dictionary *p_dict)
                 case e_ATP_ValueType_bool:
                     l_copy->m_value.m_value.m_bool = it->m_value.m_value.m_bool;
                     break;
+                case e_ATP_ValueType_dict:
+                    l_copy->m_value.m_value.m_dict = ATP_dictionaryDuplicate(&it->m_value.m_value.m_dict);
+                    break;
                 default:
                     break;
             }
@@ -184,7 +192,7 @@ ATP_Dictionary ATP_dictionaryDuplicate(ATP_Dictionary *p_dict)
     return NULL;
 }
 
-int ATP_dictionarySetString(ATP_Dictionary *p_dict, const char *p_key, const char *p_value)
+static ATP_DictionaryImpl *findOrCreateEntry(ATP_Dictionary *p_dict, const char *p_key)
 {
     ATP_DictionaryImpl *l_entry;
     HASH_FIND_STR(*p_dict, p_key, l_entry);
@@ -193,10 +201,21 @@ int ATP_dictionarySetString(ATP_Dictionary *p_dict, const char *p_key, const cha
         l_entry = createEntry(p_key);
         if (l_entry == NULL)
         {
-            return 0;
+            return NULL;
         }
 
         HASH_ADD_STR(*p_dict, m_key, l_entry);
+    }
+
+    return l_entry;
+}
+
+int ATP_dictionarySetString(ATP_Dictionary *p_dict, const char *p_key, const char *p_value)
+{
+    ATP_DictionaryImpl *l_entry = findOrCreateEntry(p_dict, p_key);
+    if (l_entry == NULL)
+    {
+        return 0;
     }
 
     return ATP_dictionaryItSetString(l_entry, p_value);
@@ -204,17 +223,10 @@ int ATP_dictionarySetString(ATP_Dictionary *p_dict, const char *p_key, const cha
 
 int ATP_dictionarySetUint(ATP_Dictionary *p_dict, const char *p_key, unsigned long long p_value)
 {
-    ATP_DictionaryImpl *l_entry;
-    HASH_FIND_STR(*p_dict, p_key, l_entry);
+    ATP_DictionaryImpl *l_entry = findOrCreateEntry(p_dict, p_key);
     if (l_entry == NULL)
     {
-        l_entry = createEntry(p_key);
-        if (l_entry == NULL)
-        {
-            return 0;
-        }
-
-        HASH_ADD_STR(*p_dict, m_key, l_entry);
+        return 0;
     }
 
     return ATP_dictionaryItSetUint(l_entry, p_value);
@@ -222,17 +234,10 @@ int ATP_dictionarySetUint(ATP_Dictionary *p_dict, const char *p_key, unsigned lo
 
 int ATP_dictionarySetInt(ATP_Dictionary *p_dict, const char *p_key, signed long long p_value)
 {
-    ATP_DictionaryImpl *l_entry;
-    HASH_FIND_STR(*p_dict, p_key, l_entry);
+    ATP_DictionaryImpl *l_entry = findOrCreateEntry(p_dict, p_key);
     if (l_entry == NULL)
     {
-        l_entry = createEntry(p_key);
-        if (l_entry == NULL)
-        {
-            return 0;
-        }
-
-        HASH_ADD_STR(*p_dict, m_key, l_entry);
+        return 0;
     }
 
     return ATP_dictionaryItSetInt(l_entry, p_value);
@@ -240,17 +245,10 @@ int ATP_dictionarySetInt(ATP_Dictionary *p_dict, const char *p_key, signed long 
 
 int ATP_dictionarySetDouble(ATP_Dictionary *p_dict, const char *p_key, double p_value)
 {
-    ATP_DictionaryImpl *l_entry;
-    HASH_FIND_STR(*p_dict, p_key, l_entry);
+    ATP_DictionaryImpl *l_entry = findOrCreateEntry(p_dict, p_key);
     if (l_entry == NULL)
     {
-        l_entry = createEntry(p_key);
-        if (l_entry == NULL)
-        {
-            return 0;
-        }
-
-        HASH_ADD_STR(*p_dict, m_key, l_entry);
+        return 0;
     }
 
     return ATP_dictionaryItSetDouble(l_entry, p_value);
@@ -258,20 +256,24 @@ int ATP_dictionarySetDouble(ATP_Dictionary *p_dict, const char *p_key, double p_
 
 int ATP_dictionarySetBool(ATP_Dictionary *p_dict, const char *p_key, int p_value)
 {
-    ATP_DictionaryImpl *l_entry;
-    HASH_FIND_STR(*p_dict, p_key, l_entry);
+    ATP_DictionaryImpl *l_entry = findOrCreateEntry(p_dict, p_key);
     if (l_entry == NULL)
     {
-        l_entry = createEntry(p_key);
-        if (l_entry == NULL)
-        {
-            return 0;
-        }
-
-        HASH_ADD_STR(*p_dict, m_key, l_entry);
+        return 0;
     }
 
     return ATP_dictionaryItSetBool(l_entry, p_value);
+}
+
+int ATP_dictionarySetDict(ATP_Dictionary *p_dict, const char *p_key, ATP_Dictionary p_value)
+{
+    ATP_DictionaryImpl *l_entry = findOrCreateEntry(p_dict, p_key);
+    if (l_entry == NULL)
+    {
+        return 0;
+    }
+
+    return ATP_dictionaryItSetDict(l_entry, p_value);
 }
 
 int ATP_dictionaryGetString(ATP_Dictionary *p_dict, const char *p_key, const char **p_value)
@@ -332,6 +334,18 @@ int ATP_dictionaryGetBool(ATP_Dictionary *p_dict, const char *p_key, int *p_valu
     }
 
     return ATP_dictionaryItGetBool(l_entry, p_value);
+}
+
+int ATP_dictionaryGetDict(ATP_Dictionary *p_dict, const char *p_key, ATP_Dictionary **p_value)
+{
+    ATP_DictionaryImpl *l_entry;
+    HASH_FIND_STR(*p_dict, p_key, l_entry);
+    if (l_entry == NULL)
+    {
+        return 0;
+    }
+
+    return ATP_dictionaryItGetDict(l_entry, p_value);
 }
 
 ATP_DictionaryIterator ATP_dictionaryBegin(ATP_Dictionary *p_dict)
@@ -410,6 +424,14 @@ int ATP_dictionaryItSetBool(ATP_DictionaryIterator p_iterator, int p_value)
     return 1;
 }
 
+int ATP_dictionaryItSetDict(ATP_DictionaryIterator p_iterator, ATP_Dictionary p_value)
+{
+    DBG("setting '%s': <dictionary>\n", p_iterator->m_key);
+    changeValueType(p_iterator, e_ATP_ValueType_dict);
+    p_iterator->m_value.m_value.m_dict = p_value;
+    return 1;
+}
+
 int ATP_dictionaryItGetString(ATP_DictionaryIterator p_iterator, const char **p_value)
 {
     if (p_iterator->m_value.m_type == e_ATP_ValueType_string)
@@ -459,6 +481,18 @@ int ATP_dictionaryItGetBool(ATP_DictionaryIterator p_iterator, int *p_value)
     if (p_iterator->m_value.m_type == e_ATP_ValueType_bool)
     {
         *p_value = p_iterator->m_value.m_value.m_bool;
+        return 1;
+    }
+
+    return 0;
+}
+
+int ATP_dictionaryItGetDict(ATP_DictionaryIterator p_iterator, ATP_Dictionary **p_value)
+{
+    if (p_iterator->m_value.m_type == e_ATP_ValueType_dict)
+    {
+        *p_value = &p_iterator->m_value.m_value.m_dict;
+        DBG("dictionary member is %p\n", p_iterator->m_value.m_value.m_dict);
         return 1;
     }
 

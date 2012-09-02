@@ -39,13 +39,13 @@ static void usage(void)
 static int writeJsonDictionary(ATP_Dictionary *p_source, JSONNODE *p_node)
 {
     ATP_DictionaryIterator it;
-    DBG("dictionary has %u entries\n", ATP_dictionaryCount(p_source));
+    DBG("dictionary %p has %u entries\n", *p_source, ATP_dictionaryCount(p_source));
     for (it = ATP_dictionaryBegin(p_source); ATP_dictionaryHasNext(it); it = ATP_dictionaryNext(it))
     {
         JSONNODE *l_child = NULL;
         const char *l_key = ATP_dictionaryGetKey(it);
 
-        DBG("reading entry '%s' (type %s)\n", l_key, ATP_valueTypeToString(ATP_dictionaryGetType(it)));
+        DBG("reading from %p entry (type %s) '%s'\n", *p_source, ATP_valueTypeToString(ATP_dictionaryGetType(it)), l_key);
         switch (ATP_dictionaryGetType(it))
         {
             // TODO: add support for the other types
@@ -82,6 +82,27 @@ static int writeJsonDictionary(ATP_Dictionary *p_source, JSONNODE *p_node)
                     int l_value = 0;
                     ATP_dictionaryItGetBool(it, &l_value);
                     l_child = json_new_b(l_key, l_value);
+                }
+                break;
+            case e_ATP_ValueType_dict:
+                {
+                    ATP_Dictionary *l_value = NULL;
+                    l_child = json_new(JSON_NODE);
+                    if (l_child == NULL)
+                    {
+                        ERR(PROCNAME ": could not allocate JSON instance\n");
+                        exit(EX_SOFTWARE);
+                    }
+
+                    ATP_dictionaryItGetDict(it, &l_value);
+                    if (!writeJsonDictionary(l_value, l_child))
+                    {
+                        json_free(l_child);
+                        return 0;
+                    }
+
+                    json_set_name(l_child, l_key);
+                    DBG("processed dictionary %p\n", *l_value);
                 }
                 break;
             default:
@@ -172,7 +193,20 @@ static int readJsonDictionary(JSONNODE *p_node, ATP_Dictionary *p_dest)
         json_char *l_name = json_name(*it);
         if (json_type(*it) == JSON_NODE)
         {
-            // TODO: create sub-dictionary
+            ATP_Dictionary l_subDict;
+            ATP_dictionaryInit(&l_subDict);
+            if (!readJsonDictionary(*it, &l_subDict))
+            {
+                ATP_dictionaryDestroy(&l_subDict);
+                json_free(l_name);
+                return 0;
+            }
+            if (!ATP_dictionarySetDict(p_dest, l_name, l_subDict))
+            {
+                ATP_dictionaryDestroy(&l_subDict);
+                json_free(l_name);
+                return 0;
+            }
         }
         else if (json_type(*it) == JSON_ARRAY)
         {

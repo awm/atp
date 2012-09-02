@@ -2,127 +2,181 @@
 #include "ATP/Library/Log.h"
 #include "ATP/Library/Exit.h"
 
+#include "ATP/ThirdParty/libjson/libjson.h"
+
 #include <stdlib.h>
-#include <ctype.h>
-#include <time.h>
-#include <limits.h>
+
+#define PROCNAME "json"
 
 typedef struct Settings
 {
-    unsigned int m_minEntries;
-    unsigned int m_maxEntries;
-    unsigned int m_maxDepth;
+    int m_fileIsOutput;
+    const char *m_filePath;
 } Settings;
-
-static const char cs_characters[] = " \"'.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
 
 static void usage(void)
 {
     LOG(
-"Processor: random\n");
+"Processor: " PROCNAME "\n");
     LOG(
-"    Generates a random dictionary.\n\n");
+"    Reads or writes the working dictionary in JSON format.  When writing to a\n"
+"    file, the dictionary is also passed on to the next pipeline stage, if any.\n\n");
     LOG(
-"    Usage: @random <min_entries> <max_entries> <max_depth>\n");
+"    Usage: @" PROCNAME " read stdin|<filename>\n"
+"           @" PROCNAME " write stdout|<filename>\n\n");
     LOG(
-"        <min_entries> The minimum number of dictionary keys/array entries to\n"
-"                      create at each level\n");
+"        stdin      Indicates that the JSON source should be read from stdin\n"
+"                   rather than a file\n");
     LOG(
-"        <max_entries> The maximum number of dictionary keys/array entries to\n"
-"                      create at each level\n");
+"        stdout     Indicates that the JSON source should be written to stdout\n"
+"                   rather than a file\n");
     LOG(
-"          <max_depth> The maximum nested dictionary/array depth to use\n\n");
+"        <filename> The name of a file to read the working dictionary from or\n"
+"                   write it to\n\n");
 }
 
-static unsigned long long randomUint(unsigned long long p_lower, unsigned long long p_upper)
+static int writeJsonDictionary(ATP_Dictionary *p_source, JSONNODE *p_node)
 {
-    return (((unsigned long long) rand() * (unsigned long long) rand()) % (p_upper - p_lower)) + p_lower;
-}
-
-static signed long long randomInt(signed long long p_lower, signed long long p_upper)
-{
-    return (((signed long long) rand() * (signed long long) rand()) % (p_upper - p_lower)) + p_lower;
-}
-
-static int randomBool(void)
-{
-    return (rand() % 2);
-}
-
-static double randomDouble(void)
-{
-    return ((randomBool() * -1.0) * (double) rand() / (double) RAND_MAX);
-}
-
-static void randomString(char p_buffer[c_ATP_Dictionary_keySize + 1])
-{
-    unsigned int i;
-    unsigned int l_count = randomUint(1, c_ATP_Dictionary_keySize);
-
-    memset(p_buffer, 0, c_ATP_Dictionary_keySize + 1);
-    for (i = 0; i < l_count; ++i)
+    ATP_DictionaryIterator it;
+    DBG("dictionary has %u entries\n", ATP_dictionaryCount(p_source));
+    for (it = ATP_dictionaryBegin(p_source); ATP_dictionaryHasNext(it); it = ATP_dictionaryNext(it))
     {
-        unsigned int c = randomUint(0, strlen(cs_characters));
-        p_buffer[i] = cs_characters[c];
+        JSONNODE *l_child = NULL;
+        const char *l_key = ATP_dictionaryGetKey(it);
+
+        DBG("reading entry '%s' (type %s)\n", l_key, ATP_valueTypeToString(ATP_dictionaryGetType(it)));
+        switch (ATP_dictionaryGetType(it))
+        {
+            // TODO: add support for the other types
+            case e_ATP_ValueType_uint:
+                {
+                    unsigned long long l_value = 0;
+                    ATP_dictionaryItGetUint(it, &l_value);
+                    l_child = json_new_i(l_key, l_value);
+                }
+                break;
+            case e_ATP_ValueType_int:
+                {
+                    signed long long l_value = 0;
+                    ATP_dictionaryItGetInt(it, &l_value);
+                    l_child = json_new_i(l_key, l_value);
+                }
+                break;
+            case e_ATP_ValueType_double:
+                {
+                    double l_value = 0.0;
+                    ATP_dictionaryItGetDouble(it, &l_value);
+                    l_child = json_new_f(l_key, l_value);
+                }
+                break;
+            case e_ATP_ValueType_bool:
+                {
+                    int l_value = 0;
+                    ATP_dictionaryItGetBool(it, &l_value);
+                    l_child = json_new_b(l_key, l_value);
+                }
+                break;
+            default:
+                break;
+        }
+
+        if (l_child != NULL)
+        {
+            json_push_back(p_node, l_child);
+        }
     }
+
+    return 1;
+}
+
+static int writeJson(ATP_Dictionary *p_source, const char *p_filename)
+{
+    FILE *l_file = NULL;
+    JSONNODE *l_node = NULL;
+
+    if (strcmp("stdout", p_filename) == 0)
+    {
+        l_file = stdout;
+    }
+    else
+    {
+        l_file = fopen(p_filename, "wb");
+        if (l_file == NULL)
+        {
+            PERR();
+            return 0;
+        }
+    }
+
+    l_node = json_new(JSON_NODE);
+    if (l_node == NULL)
+    {
+        ERR(PROCNAME ": could not allocate JSON instance\n");
+        if (l_file != stdout)
+        {
+            fclose(l_file);
+        }
+        exit(EX_SOFTWARE);
+    }
+
+    if (writeJsonDictionary(p_source, l_node))
+    {
+        json_char *l_json = json_write_formatted(l_node);
+        if (l_json == NULL)
+        {
+            ERR(PROCNAME ": could not format JSON\n");
+            json_delete(l_node);
+            if (l_file != stdout)
+            {
+                fclose(l_file);
+            }
+            return 0;
+        }
+
+        fputs(l_json, l_file);
+        fputs("\n", l_file);
+        json_free(l_json);
+        json_delete(l_node);
+        if (l_file != stdout)
+        {
+            fclose(l_file);
+        }
+        return 1;
+    }
+    else
+    {
+        json_delete(l_node);
+        if (l_file != stdout)
+        {
+            fclose(l_file);
+        }
+        return 0;
+    }
+}
+
+static int readJson(const char *p_filename, ATP_Dictionary *p_dest)
+{
+    return 0;
 }
 
 static int run(int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output, void *p_token)
 {
     Settings *l_settings = p_token;
 
+    DBG("in json run, %s\n", (l_settings->m_fileIsOutput ? "writing" : "reading"));
     if (ATP_processorHelpRequested())
     {
         usage();
-        *p_output = NULL;
+    }
+    else if (l_settings->m_fileIsOutput)
+    {
+        *p_output = *p_input;
+        DBG("writing JSON to %s...\n", l_settings->m_filePath);
+        return writeJson(p_input, l_settings->m_filePath);
     }
     else
     {
-        unsigned int l_entries;
-        time_t l_now = time(NULL);
-        srand(l_now);
-
-        ATP_dictionaryInit(p_output);
-        l_entries = randomUint(l_settings->m_minEntries, l_settings->m_maxEntries + 1);
-        while (l_entries-- > 0)
-        {
-            char l_key[c_ATP_Dictionary_keySize + 1];
-            randomString(l_key);
-
-            switch (randomUint(e_ATP_ValueType_string, e_ATP_ValueType_array))
-            {
-                // TODO: add other types
-                case e_ATP_ValueType_uint:
-                    if (!ATP_dictionarySetUint(p_output, l_key, randomUint(0, ULLONG_MAX)))
-                    {
-                        ATP_dictionaryDestroy(p_output);
-                        return 0;
-                    }
-                    break;
-                case e_ATP_ValueType_int:
-                    if (!ATP_dictionarySetInt(p_output, l_key, randomInt(LLONG_MIN, LLONG_MAX)))
-                    {
-                        ATP_dictionaryDestroy(p_output);
-                        return 0;
-                    }
-                    break;
-                case e_ATP_ValueType_double:
-                    if (!ATP_dictionarySetDouble(p_output, l_key, randomDouble()))
-                    {
-                        ATP_dictionaryDestroy(p_output);
-                        return 0;
-                    }
-                    break;
-                case e_ATP_ValueType_bool:
-                default:
-                    if (!ATP_dictionarySetBool(p_output, l_key, randomBool()))
-                    {
-                        ATP_dictionaryDestroy(p_output);
-                        return 0;
-                    }
-                    break;
-            }
-        }
+        return readJson(l_settings->m_filePath, p_output);
     }
     return 1;
 }
@@ -133,23 +187,8 @@ static void unload(void *p_token)
     free(l_settings);
 }
 
-static int stringIsNumber(const char *p_string)
-{
-    unsigned int i;
-    unsigned int l_length = strlen(p_string);
-    for (i = 0; i < l_length; ++i)
-    {
-        if (!isdigit(p_string[i]))
-        {
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
 #ifdef ATTR_STATIC_PROCESSORS
-int random_load(int p_index, const ATP_CmdLineParam *p_parameters, struct ATP_ProcessorInterface *p_interface)
+int json_load(int p_index, const ATP_CmdLineParam *p_parameters, struct ATP_ProcessorInterface *p_interface)
 #else
 int load(int p_index, const ATP_CmdLineParam *p_parameters, struct ATP_ProcessorInterface *p_interface)
 #endif
@@ -163,38 +202,45 @@ int load(int p_index, const ATP_CmdLineParam *p_parameters, struct ATP_Processor
         PERR();
         exit(EX_OSERR);
     }
+    memset(l_settings, 0, sizeof(Settings));
 
     LL_FOREACH(p_parameters, it)
     {
-        if (!stringIsNumber(it->m_parameter))
-        {
-            free(l_settings);
-            ERR("random: '%s' is not a valid parameter\n", it->m_parameter);
-            usage();
-            return 0;
-        }
-
         switch (l_argc)
         {
             case 0:
-                l_settings->m_minEntries = atoi(it->m_parameter);
+                if (strcmp("read", it->m_parameter) == 0)
+                {
+                    l_settings->m_fileIsOutput = 0;
+                }
+                else if (strcmp("write", it->m_parameter) == 0)
+                {
+                    l_settings->m_fileIsOutput = 1;
+                }
+                else
+                {
+                    free(l_settings);
+                    ERR(PROCNAME ": '%s' is not a valid parameter\n", it->m_parameter);
+                    usage();
+                    return 0;
+                }
                 break;
             case 1:
-                l_settings->m_maxEntries = atoi(it->m_parameter);
-                break;
-            case 2:
-                l_settings->m_maxDepth = atoi(it->m_parameter);
+                l_settings->m_filePath = it->m_parameter;
                 break;
         }
 
         ++l_argc;
     }
-    if (l_argc != 3)
+    if (!ATP_processorHelpRequested())
     {
-        free(l_settings);
-        ERR("random: wrong number of parameters\n");
-        usage();
-        return 0;
+        if (l_argc != 2)
+        {
+            free(l_settings);
+            ERR(PROCNAME ": wrong number of parameters\n");
+            usage();
+            return 0;
+        }
     }
 
     p_interface->m_token = l_settings;

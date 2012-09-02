@@ -31,7 +31,6 @@ static int run(int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output, v
         usage();
     }
 
-    *p_output = NULL;
     return 1;
 }
 

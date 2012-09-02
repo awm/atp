@@ -1,1 +1,3 @@
 module { c libjson atp dynamiclib }
+
+setLibName json.processor

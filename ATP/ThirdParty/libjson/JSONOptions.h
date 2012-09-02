@@ -61,7 +61,7 @@
  *  this would be a client application communicating with a server if the server
  *  returns things like last modified date and other things that you don't use.
  */
-//#define JSON_PREPARSE
+#define JSON_PREPARSE
 
 
 /*
@@ -117,7 +117,7 @@
  *  your json into a stream, which will automatically hit a callback when full nodes are
  *  completed
  */
-#define JSON_STREAM
+// #define JSON_STREAM
 
 
 /*

@@ -5,6 +5,7 @@
 #include "ATP/ThirdParty/libjson/libjson.h"
 
 #include <stdlib.h>
+#include <math.h>
 
 #define PROCNAME "json"
 
@@ -119,8 +120,10 @@ static int writeJson(ATP_Dictionary *p_source, const char *p_filename)
         exit(EX_SOFTWARE);
     }
 
+    // convert the dictionary to a json structure
     if (writeJsonDictionary(p_source, l_node))
     {
+        // write out the json string
         json_char *l_json = json_write_formatted(l_node);
         if (l_json == NULL)
         {
@@ -154,9 +157,115 @@ static int writeJson(ATP_Dictionary *p_source, const char *p_filename)
     }
 }
 
+static int readJsonDictionary(JSONNODE *p_node, ATP_Dictionary *p_dest)
+{
+    JSONNODE_ITERATOR it;
+    for (it = json_begin(p_node); it != json_end(p_node); ++it)
+    {
+        json_char *l_name = json_name(*it);
+        if (json_type(*it) == JSON_NODE)
+        {
+            // TODO: create sub-dictionary
+        }
+        else if (json_type(*it) == JSON_ARRAY)
+        {
+            // TODO: create array
+        }
+        else if (json_type(*it) == JSON_NUMBER)
+        {
+            double l_number = json_as_float(*it);
+            double l_integer = 0.0;
+            // if the number is integral, create the dictionary entry as an integer, otherwise create it as a double
+            if (modf(l_number, &l_integer) == 0.0f)
+            {
+                if (!ATP_dictionarySetInt(p_dest, l_name, (signed long long) l_integer))
+                {
+                    json_free(l_name);
+                    return 0;
+                }
+            }
+            else
+            {
+                if (!ATP_dictionarySetDouble(p_dest, l_name, l_number))
+                {
+                    json_free(l_name);
+                    return 0;
+                }
+            }
+        }
+        else if (json_type(*it) == JSON_BOOL)
+        {
+            int l_bool = json_as_bool(*it);
+            if (!ATP_dictionarySetBool(p_dest, l_name, l_bool))
+            {
+                json_free(l_name);
+                return 0;
+            }
+        }
+
+        json_free(l_name);
+    }
+
+    return 1;
+}
+
 static int readJson(const char *p_filename, ATP_Dictionary *p_dest)
 {
-    return 0;
+    FILE *l_file = NULL;
+    JSONNODE *l_node = NULL;
+    json_char *l_json = NULL;
+    size_t l_fileSize;
+    int l_return;
+
+    if (strcmp("stdin", p_filename) == 0)
+    {
+        l_file = stdout;
+    }
+    else
+    {
+        l_file = fopen(p_filename, "rb");
+        if (l_file == NULL)
+        {
+            PERR();
+            return 0;
+        }
+    }
+
+    // read in the entire file
+    fseek(l_file, 0L, SEEK_END);
+    l_fileSize = ftell(l_file);
+    fseek(l_file, 0L, SEEK_SET);
+    l_json = malloc(l_fileSize);
+    if (l_json == NULL)
+    {
+        PERR();
+        exit(EX_OSERR);
+    }
+    if (fread(l_json, 1, l_fileSize, l_file) != l_fileSize)
+    {
+        PERR();
+        free(l_json);
+        fclose(l_file);
+        return 0;
+    }
+    fclose(l_file);
+
+    // parse the json
+    l_node = json_parse(l_json);
+    if (json_type(l_node) != JSON_NODE)
+    {
+        json_delete(l_node);
+        free(l_json);
+        ERR("Invalid JSON file: %s\n", p_filename);
+        return 0;
+    }
+
+    // convert the json structure to a dictionary
+    l_return = readJsonDictionary(l_node, p_dest);
+    json_delete(l_node);
+    free(l_json);
+
+    return l_return;
 }
 
 static int run(int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output, void *p_token)

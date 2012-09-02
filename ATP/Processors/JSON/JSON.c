@@ -49,6 +49,13 @@ static int writeJsonDictionary(ATP_Dictionary *p_source, JSONNODE *p_node)
         switch (ATP_dictionaryGetType(it))
         {
             // TODO: add support for the other types
+            case e_ATP_ValueType_string:
+                {
+                    const char *l_value = NULL;
+                    ATP_dictionaryItGetString(it, &l_value);
+                    l_child = json_new_a(l_key, l_value);
+                }
+                break;
             case e_ATP_ValueType_uint:
                 {
                     unsigned long long l_value = 0;
@@ -202,6 +209,18 @@ static int readJsonDictionary(JSONNODE *p_node, ATP_Dictionary *p_dest)
                 return 0;
             }
         }
+        else if (json_type(*it) == JSON_STRING)
+        {
+            json_char *l_str = json_as_string(*it);
+            if (!ATP_dictionarySetString(p_dest, l_name, l_str))
+            {
+                json_free(l_str);
+                json_free(l_name);
+                return 0;
+            }
+            json_free(l_str);
+        }
+        // TODO: add support for the other types
 
         json_free(l_name);
     }

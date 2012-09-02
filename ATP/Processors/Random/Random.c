@@ -123,11 +123,19 @@ static int run(int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output, v
         while (l_entries-- > 0)
         {
             char l_key[c_ATP_Dictionary_keySize + 1];
+            char l_randStr[c_ATP_Dictionary_keySize + 1];
             randomString(l_key);
 
             switch (randomUint(e_ATP_ValueType_string, e_ATP_ValueType_array))
             {
                 // TODO: add other types
+                case e_ATP_ValueType_string:
+                    randomString(l_randStr);
+                    if (!ATP_dictionarySetString(p_output, l_key, l_randStr))
+                    {
+                        return 0;
+                    }
+                    break;
                 case e_ATP_ValueType_uint:
                     if (!ATP_dictionarySetUint(p_output, l_key, randomUint(0, ULLONG_MAX)))
                     {

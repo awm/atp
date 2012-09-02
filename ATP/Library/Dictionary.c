@@ -3,7 +3,7 @@
 #include "Exit.h"
 
 #include <stdio.h>
-//#include "ATP/ThirdParty/UT/utstring.h"
+#include "ATP/ThirdParty/UT/utstring.h"
 //#include "ATP/ThirdParty/UT/utarray.h"
 #include "ATP/ThirdParty/UT/uthash.h"
 
@@ -12,7 +12,7 @@ typedef struct Value
     ATP_ValueType m_type;
     union
     {
-        //UT_string m_string;
+        UT_string m_string;
         unsigned long long m_uint;
         signed long long m_int;
         double m_double;
@@ -58,11 +58,23 @@ static void changeValueType(ATP_DictionaryImpl *p_entry, ATP_ValueType p_newType
         switch (p_entry->m_value.m_type)
         {
             // TODO: add support for other types
+            case e_ATP_ValueType_string:
+                utstring_done(&p_entry->m_value.m_value.m_string);
+                break;
             default:
                 break;
         }
 
         p_entry->m_value.m_type = p_newType;
+        switch (p_entry->m_value.m_type)
+        {
+            // TODO: add support for other types
+            case e_ATP_ValueType_string:
+                utstring_init(&p_entry->m_value.m_value.m_string);
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -143,6 +155,10 @@ ATP_Dictionary ATP_dictionaryDuplicate(ATP_Dictionary *p_dict)
             switch (l_copy->m_value.m_type)
             {
                 // TODO: add support for other types
+                case e_ATP_ValueType_string:
+                    utstring_clear(&l_copy->m_value.m_value.m_string);
+                    utstring_concat(&l_copy->m_value.m_value.m_string, &it->m_value.m_value.m_string);
+                    break;
                 case e_ATP_ValueType_uint:
                     l_copy->m_value.m_value.m_uint = it->m_value.m_value.m_uint;
                     break;
@@ -166,6 +182,24 @@ ATP_Dictionary ATP_dictionaryDuplicate(ATP_Dictionary *p_dict)
     }
 
     return NULL;
+}
+
+int ATP_dictionarySetString(ATP_Dictionary *p_dict, const char *p_key, const char *p_value)
+{
+    ATP_DictionaryImpl *l_entry;
+    HASH_FIND_STR(*p_dict, p_key, l_entry);
+    if (l_entry == NULL)
+    {
+        l_entry = createEntry(p_key);
+        if (l_entry == NULL)
+        {
+            return 0;
+        }
+
+        HASH_ADD_STR(*p_dict, m_key, l_entry);
+    }
+
+    return ATP_dictionaryItSetString(l_entry, p_value);
 }
 
 int ATP_dictionarySetUint(ATP_Dictionary *p_dict, const char *p_key, unsigned long long p_value)
@@ -238,6 +272,18 @@ int ATP_dictionarySetBool(ATP_Dictionary *p_dict, const char *p_key, int p_value
     }
 
     return ATP_dictionaryItSetBool(l_entry, p_value);
+}
+
+int ATP_dictionaryGetString(ATP_Dictionary *p_dict, const char *p_key, const char **p_value)
+{
+    ATP_DictionaryImpl *l_entry;
+    HASH_FIND_STR(*p_dict, p_key, l_entry);
+    if (l_entry == NULL)
+    {
+        return 0;
+    }
+
+    return ATP_dictionaryItGetString(l_entry, p_value);
 }
 
 int ATP_dictionaryGetUint(ATP_Dictionary *p_dict, const char *p_key, unsigned long long *p_value)
@@ -324,6 +370,14 @@ ATP_ValueType ATP_dictionaryGetType(ATP_DictionaryIterator p_iterator)
     return p_iterator->m_value.m_type;
 }
 
+int ATP_dictionaryItSetString(ATP_DictionaryIterator p_iterator, const char *p_value)
+{
+    DBG("setting '%s': '%s'\n", p_iterator->m_key, p_value);
+    changeValueType(p_iterator, e_ATP_ValueType_string);
+    utstring_bincpy(&p_iterator->m_value.m_value.m_string, p_value, strlen(p_value));
+    return 1;
+}
+
 int ATP_dictionaryItSetUint(ATP_DictionaryIterator p_iterator, unsigned long long p_value)
 {
     DBG("setting '%s': %llu\n", p_iterator->m_key, p_value);
@@ -354,6 +408,17 @@ int ATP_dictionaryItSetBool(ATP_DictionaryIterator p_iterator, int p_value)
     changeValueType(p_iterator, e_ATP_ValueType_bool);
     p_iterator->m_value.m_value.m_bool = (p_value != 0);
     return 1;
+}
+
+int ATP_dictionaryItGetString(ATP_DictionaryIterator p_iterator, const char **p_value)
+{
+    if (p_iterator->m_value.m_type == e_ATP_ValueType_string)
+    {
+        *p_value = utstring_body(&p_iterator->m_value.m_value.m_string);
+        return 1;
+    }
+
+    return 0;
 }
 
 int ATP_dictionaryItGetUint(ATP_DictionaryIterator p_iterator, unsigned long long *p_value)

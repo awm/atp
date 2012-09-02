@@ -104,6 +104,19 @@ Parameters:
 */
 EXPORT void ATP_dictionaryRemove(ATP_Dictionary *p_dict, const char *p_key);
 
+/* Function: ATP_dictionarySetString
+Set the value of a given entry to be the provided character string.  The entry is created if it does not exist.
+If it does exist then the old value and type are discarded and replaced with the new ones.
+
+Parameters:
+    p_dict  - The dictionary handle.
+    p_key   - The key of the dictionary entry to set.
+    p_value - The value to store in the dictionary entry.
+
+Returns:
+    1 on success, 0 on failure.
+*/
+EXPORT int ATP_dictionarySetString(ATP_Dictionary *p_dict, const char *p_key, const char *p_value);
 /* Function: ATP_dictionarySetUint
 Set the value of a given entry to be the provided unsigned integer value.  The entry is created if it does not exist.
 If it does exist then the old value and type are discarded and replaced with the new ones.
@@ -157,6 +170,19 @@ Returns:
 */
 EXPORT int ATP_dictionarySetBool(ATP_Dictionary *p_dict, const char *p_key, int p_value);
 
+/* Function: ATP_dictionaryGetString
+Get the value of a given string entry.
+
+Parameters:
+    p_dict  - The dictionary handle.
+    p_key   - The key of the dictionary entry to get.
+    p_value - The location to store the value from the dictionary entry in.  The string pointed to is only valid while the
+              dictionary entry remains unchanged.
+
+Returns:
+    1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
+*/
+EXPORT int ATP_dictionaryGetString(ATP_Dictionary *p_dict, const char *p_key, const char **p_value);
 /* Function: ATP_dictionaryGetUint
 Get the value of a given unsigned integer entry.
 
@@ -268,6 +294,18 @@ Returns:
 */
 EXPORT ATP_ValueType ATP_dictionaryGetType(ATP_DictionaryIterator p_iterator);
 
+/* Function: ATP_dictionaryItSetString
+Set the value of a given entry to be the provided character string.  The entry is created if it does not exist.
+If it does exist then the old value and type are discarded and replaced with the new ones.
+
+Parameters:
+    p_iterator - The iterator pointing to the entry.
+    p_value    - The value to store in the dictionary entry.
+
+Returns:
+    1 on success, 0 on failure.
+*/
+EXPORT int ATP_dictionaryItSetString(ATP_DictionaryIterator p_iterator, const char *p_value);
 /* Function: ATP_dictionaryItSetUint
 Set the value of a given entry to be the provided unsigned integer value.  The entry is created if it does not exist.
 If it does exist then the old value and type are discarded and replaced with the new ones.
@@ -317,6 +355,18 @@ Returns:
 */
 EXPORT int ATP_dictionaryItSetBool(ATP_DictionaryIterator p_iterator, int p_value);
 
+/* Function: ATP_dictionaryItGetString
+Get the value of a given unsigned integer entry.
+
+Parameters:
+    p_iterator - The iterator pointing to the entry.
+    p_value    - The location to store the value from the dictionary entry in.  The string pointed to is only valid while the
+                 dictionary entry remains unchanged.
+
+Returns:
+    1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
+*/
+EXPORT int ATP_dictionaryItGetString(ATP_DictionaryIterator p_iterator, const char **p_value);
 /* Function: ATP_dictionaryItGetUint
 Get the value of a given unsigned integer entry.
 

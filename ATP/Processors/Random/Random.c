@@ -4,7 +4,6 @@
 
 #include <stdlib.h>
 #include <ctype.h>
-#include <time.h>
 #include <limits.h>
 
 #define PROCNAME "random"
@@ -15,6 +14,10 @@ typedef struct Settings
     unsigned int m_maxEntries;
     unsigned int m_maxDepth;
 } Settings;
+
+// forward declarations
+static int randomDictionary(ATP_Dictionary *p_dict, const Settings *p_settings, unsigned int p_depth);
+static int randomArray(ATP_Array *p_array, const Settings *p_settings, unsigned int p_depth);
 
 static FILE *gs_randFile = NULL;
 
@@ -105,6 +108,91 @@ static void randomString(char p_buffer[c_ATP_Dictionary_keySize + 1])
     }
 }
 
+static int randomArray(ATP_Array *p_array, const Settings *p_settings, unsigned int p_depth)
+{
+    unsigned int i;
+    ATP_ValueType l_type = randomUint(e_ATP_ValueType_string, e_ATP_ValueType_array);
+    unsigned int l_entries = randomUint(p_settings->m_minEntries, p_settings->m_maxEntries + 1);
+    for (i = 0; i < l_entries; ++i)
+    {
+        char l_randStr[c_ATP_Dictionary_keySize + 1];
+        ATP_Dictionary l_randDict;
+        ATP_Array l_randArray;
+
+        switch (l_type)
+        {
+            case e_ATP_ValueType_string:
+                randomString(l_randStr);
+                if (!ATP_arraySetString(p_array, i, l_randStr))
+                {
+                    return 0;
+                }
+                break;
+            case e_ATP_ValueType_uint:
+                if (!ATP_arraySetUint(p_array, i, randomUint(0, ULLONG_MAX)))
+                {
+                    return 0;
+                }
+                break;
+            case e_ATP_ValueType_int:
+                if (!ATP_arraySetInt(p_array, i, randomInt(LLONG_MIN, LLONG_MAX)))
+                {
+                    return 0;
+                }
+                break;
+            case e_ATP_ValueType_double:
+                if (!ATP_arraySetDouble(p_array, i, randomDouble()))
+                {
+                    return 0;
+                }
+                break;
+            case e_ATP_ValueType_bool:
+                if (!ATP_arraySetBool(p_array, i, randomBool()))
+                {
+                    return 0;
+                }
+                break;
+            case e_ATP_ValueType_dict:
+                ATP_dictionaryInit(&l_randDict);
+                if (p_depth + 1 < p_settings->m_maxDepth)
+                {
+                    if (!randomDictionary(&l_randDict, p_settings, p_depth + 1))
+                    {
+                        ATP_dictionaryDestroy(&l_randDict);
+                        return 0;
+                    }
+                }
+                if (!ATP_arraySetDict(p_array, i, l_randDict))
+                {
+                    ATP_dictionaryDestroy(&l_randDict);
+                    return 0;
+                }
+                break;
+            case e_ATP_ValueType_array:
+                ATP_arrayInit(&l_randArray);
+                if (p_depth + 1 < p_settings->m_maxDepth)
+                {
+                    if (!randomArray(&l_randArray, p_settings, p_depth + 1))
+                    {
+                        ATP_arrayDestroy(&l_randArray);
+                        return 0;
+                    }
+                }
+                if (!ATP_arraySetArray(p_array, i, l_randArray))
+                {
+                    ATP_arrayDestroy(&l_randArray);
+                    return 0;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    DBG("finished creating random array\n");
+    return 1;
+}
+
 static int randomDictionary(ATP_Dictionary *p_dict, const Settings *p_settings, unsigned int p_depth)
 {
     unsigned int l_entries = randomUint(p_settings->m_minEntries, p_settings->m_maxEntries + 1);
@@ -113,11 +201,11 @@ static int randomDictionary(ATP_Dictionary *p_dict, const Settings *p_settings, 
         char l_key[c_ATP_Dictionary_keySize + 1];
         char l_randStr[c_ATP_Dictionary_keySize + 1];
         ATP_Dictionary l_randDict;
+        ATP_Array l_randArray;
         randomString(l_key);
 
-        switch (randomUint(e_ATP_ValueType_string, e_ATP_ValueType_array))
+        switch (randomUint(e_ATP_ValueType_string, e_ATP_ValueType_array + 1))
         {
-            // TODO: add other types
             case e_ATP_ValueType_string:
                 randomString(l_randStr);
                 if (!ATP_dictionarySetString(p_dict, l_key, l_randStr))
@@ -162,6 +250,22 @@ static int randomDictionary(ATP_Dictionary *p_dict, const Settings *p_settings, 
                 if (!ATP_dictionarySetDict(p_dict, l_key, l_randDict))
                 {
                     ATP_dictionaryDestroy(&l_randDict);
+                    return 0;
+                }
+                break;
+            case e_ATP_ValueType_array:
+                ATP_arrayInit(&l_randArray);
+                if (p_depth + 1 < p_settings->m_maxDepth)
+                {
+                    if (!randomArray(&l_randArray, p_settings, p_depth + 1))
+                    {
+                        ATP_arrayDestroy(&l_randArray);
+                        return 0;
+                    }
+                }
+                if (!ATP_dictionarySetArray(p_dict, l_key, l_randArray))
+                {
+                    ATP_arrayDestroy(&l_randArray);
                     return 0;
                 }
                 break;

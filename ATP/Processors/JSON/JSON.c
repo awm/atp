@@ -15,6 +15,12 @@ typedef struct Settings
     const char *m_filePath;
 } Settings;
 
+// forward references
+static int writeJsonArray(ATP_Array *p_source, JSONNODE *p_node);
+static int writeJsonDictionary(ATP_Dictionary *p_source, JSONNODE *p_node);
+static int readJsonArray(JSONNODE *p_node, ATP_Array *p_dest);
+static int readJsonDictionary(JSONNODE *p_node, ATP_Dictionary *p_dest);
+
 static void usage(void)
 {
     LOG(
@@ -36,6 +42,103 @@ static void usage(void)
 "                   write it to\n\n");
 }
 
+static int writeJsonArray(ATP_Array *p_source, JSONNODE *p_node)
+{
+    unsigned int i;
+    DBG("array %p has %u entries\n", *p_source, ATP_arrayLength(p_source));
+    for (i = 0; i < ATP_arrayLength(p_source); ++i)
+    {
+        JSONNODE *l_child = NULL;
+
+        DBG("reading from array %p entry (type %s) %u\n", *p_source, ATP_valueTypeToString(ATP_arrayGetType(p_source, i)), i);
+        switch (ATP_arrayGetType(p_source, i))
+        {
+            case e_ATP_ValueType_string:
+                {
+                    const char *l_value = NULL;
+                    ATP_arrayGetString(p_source, i, &l_value);
+                    l_child = json_new_a(NULL, l_value);
+                }
+                break;
+            case e_ATP_ValueType_uint:
+                {
+                    unsigned long long l_value = 0;
+                    ATP_arrayGetUint(p_source, i, &l_value);
+                    l_child = json_new_i(NULL, l_value);
+                }
+                break;
+            case e_ATP_ValueType_int:
+                {
+                    signed long long l_value = 0;
+                    ATP_arrayGetInt(p_source, i, &l_value);
+                    l_child = json_new_i(NULL, l_value);
+                }
+                break;
+            case e_ATP_ValueType_double:
+                {
+                    double l_value = 0.0;
+                    ATP_arrayGetDouble(p_source, i, &l_value);
+                    l_child = json_new_f(NULL, l_value);
+                }
+                break;
+            case e_ATP_ValueType_bool:
+                {
+                    int l_value = 0;
+                    ATP_arrayGetBool(p_source, i, &l_value);
+                    l_child = json_new_b(NULL, l_value);
+                }
+                break;
+            case e_ATP_ValueType_dict:
+                {
+                    ATP_Dictionary *l_value = NULL;
+                    l_child = json_new(JSON_NODE);
+                    if (l_child == NULL)
+                    {
+                        ERR(PROCNAME ": could not allocate JSON node\n");
+                        exit(EX_SOFTWARE);
+                    }
+
+                    ATP_arrayGetDict(p_source, i, &l_value);
+                    if (!writeJsonDictionary(l_value, l_child))
+                    {
+                        json_free(l_child);
+                        return 0;
+                    }
+                    DBG("processed dictionary %p\n", *l_value);
+                }
+                break;
+            case e_ATP_ValueType_array:
+                {
+                    ATP_Array *l_value = NULL;
+                    l_child = json_new(JSON_ARRAY);
+                    if (l_child == NULL)
+                    {
+                        ERR(PROCNAME ": could not allocate JSON node\n");
+                        exit(EX_SOFTWARE);
+                    }
+
+                    ATP_arrayGetArray(p_source, i, &l_value);
+                    if (!writeJsonArray(l_value, l_child))
+                    {
+                        json_free(l_child);
+                        return 0;
+                    }
+                    DBG("processed array %p\n", *l_value);
+                }
+                break;
+            default:
+                break;
+        }
+
+        if (l_child != NULL)
+        {
+            json_push_back(p_node, l_child);
+        }
+    }
+
+    return 1;
+}
+
 static int writeJsonDictionary(ATP_Dictionary *p_source, JSONNODE *p_node)
 {
     ATP_DictionaryIterator it;
@@ -48,7 +151,6 @@ static int writeJsonDictionary(ATP_Dictionary *p_source, JSONNODE *p_node)
         DBG("reading from %p entry (type %s) '%s'\n", *p_source, ATP_valueTypeToString(ATP_dictionaryGetType(it)), l_key);
         switch (ATP_dictionaryGetType(it))
         {
-            // TODO: add support for the other types
             case e_ATP_ValueType_string:
                 {
                     const char *l_value = NULL;
@@ -90,7 +192,7 @@ static int writeJsonDictionary(ATP_Dictionary *p_source, JSONNODE *p_node)
                     l_child = json_new(JSON_NODE);
                     if (l_child == NULL)
                     {
-                        ERR(PROCNAME ": could not allocate JSON instance\n");
+                        ERR(PROCNAME ": could not allocate JSON node\n");
                         exit(EX_SOFTWARE);
                     }
 
@@ -103,6 +205,27 @@ static int writeJsonDictionary(ATP_Dictionary *p_source, JSONNODE *p_node)
 
                     json_set_name(l_child, l_key);
                     DBG("processed dictionary %p\n", *l_value);
+                }
+                break;
+            case e_ATP_ValueType_array:
+                {
+                    ATP_Array *l_value = NULL;
+                    l_child = json_new(JSON_ARRAY);
+                    if (l_child == NULL)
+                    {
+                        ERR(PROCNAME ": could not allocate JSON node\n");
+                        exit(EX_SOFTWARE);
+                    }
+
+                    ATP_dictionaryItGetArray(it, &l_value);
+                    if (!writeJsonArray(l_value, l_child))
+                    {
+                        json_free(l_child);
+                        return 0;
+                    }
+
+                    json_set_name(l_child, l_key);
+                    DBG("processed array %p\n", *l_value);
                 }
                 break;
             default:
@@ -185,6 +308,88 @@ static int writeJson(ATP_Dictionary *p_source, const char *p_filename)
     }
 }
 
+static int readJsonArray(JSONNODE *p_node, ATP_Array *p_dest)
+{
+    JSONNODE_ITERATOR it;
+    unsigned int i = 0;
+
+    for (it = json_begin(p_node); it != json_end(p_node); ++it)
+    {
+        if (json_type(*it) == JSON_NODE)
+        {
+            ATP_Dictionary l_subDict;
+            ATP_dictionaryInit(&l_subDict);
+            if (!readJsonDictionary(*it, &l_subDict))
+            {
+                ATP_dictionaryDestroy(&l_subDict);
+                return 0;
+            }
+            if (!ATP_arraySetDict(p_dest, i, l_subDict))
+            {
+                ATP_dictionaryDestroy(&l_subDict);
+                return 0;
+            }
+        }
+        else if (json_type(*it) == JSON_ARRAY)
+        {
+            ATP_Array l_subArray;
+            ATP_arrayInit(&l_subArray);
+            if (!readJsonArray(*it, &l_subArray))
+            {
+                ATP_arrayDestroy(&l_subArray);
+                return 0;
+            }
+            if (!ATP_arraySetArray(p_dest, i, l_subArray))
+            {
+                ATP_arrayDestroy(&l_subArray);
+                return 0;
+            }
+        }
+        else if (json_type(*it) == JSON_NUMBER)
+        {
+            double l_number = json_as_float(*it);
+            double l_integer = 0.0;
+            // if the number is integral, create the dictionary entry as an integer, otherwise create it as a double
+            if (modf(l_number, &l_integer) == 0.0f)
+            {
+                if (!ATP_arraySetInt(p_dest, i, (signed long long) l_integer))
+                {
+                    return 0;
+                }
+            }
+            else
+            {
+                if (!ATP_arraySetDouble(p_dest, i, l_number))
+                {
+                    return 0;
+                }
+            }
+        }
+        else if (json_type(*it) == JSON_BOOL)
+        {
+            int l_bool = json_as_bool(*it);
+            if (!ATP_arraySetBool(p_dest, i, l_bool))
+            {
+                return 0;
+            }
+        }
+        else if (json_type(*it) == JSON_STRING)
+        {
+            json_char *l_str = json_as_string(*it);
+            if (!ATP_arraySetString(p_dest, i, l_str))
+            {
+                json_free(l_str);
+                return 0;
+            }
+            json_free(l_str);
+        }
+
+        ++i;
+    }
+
+    return 1;
+}
+
 static int readJsonDictionary(JSONNODE *p_node, ATP_Dictionary *p_dest)
 {
     JSONNODE_ITERATOR it;
@@ -210,7 +415,20 @@ static int readJsonDictionary(JSONNODE *p_node, ATP_Dictionary *p_dest)
         }
         else if (json_type(*it) == JSON_ARRAY)
         {
-            // TODO: create array
+            ATP_Array l_array;
+            ATP_arrayInit(&l_array);
+            if (!readJsonArray(*it, &l_array))
+            {
+                ATP_arrayDestroy(&l_array);
+                json_free(l_name);
+                return 0;
+            }
+            if (!ATP_dictionarySetArray(p_dest, l_name, l_array))
+            {
+                ATP_arrayDestroy(&l_array);
+                json_free(l_name);
+                return 0;
+            }
         }
         else if (json_type(*it) == JSON_NUMBER)
         {
@@ -254,7 +472,6 @@ static int readJsonDictionary(JSONNODE *p_node, ATP_Dictionary *p_dest)
             }
             json_free(l_str);
         }
-        // TODO: add support for the other types
 
         json_free(l_name);
     }

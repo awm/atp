@@ -34,7 +34,7 @@ Parameters:
     p_parameters - A pointer to set to the linked list of parameters for this processor.
 
 Returns:
-    1 if parsing was sucessful, 0 if it was not.
+    1 if parsing was successful, 0 if it was not.
 */
 EXPORT int ATP_commandLineGet(int argc, char **argv, int p_proc, char **p_name, ATP_CmdLineParam **p_parameters);
 

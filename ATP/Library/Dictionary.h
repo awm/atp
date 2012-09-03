@@ -1,63 +1,32 @@
 /* File: Dictionary.h
-The dictionary type for ATP.  This implementation is built on top of uthash.
+The dictionary type for ATP.
 */
 #ifndef _ATP_LIBRARY_DICTIONARY_H_
 #define _ATP_LIBRARY_DICTIONARY_H_
 
 #include "Export.h"
+#include "Value.h"
 
 // forward declaration
 struct ATP_DictionaryImpl;
+
+/* Type: ATP_Dictionary
+Reference to a dictionary implementation.
+*/
+typedef struct ATP_DictionaryImpl *ATP_Dictionary;
+
+// include this after declaring ATP_Dictionary
+#include "Array.h"
 
 /* Constant: c_ATP_Dictionary_keySize
 The maximum string length of a dictionary key.
 */
 #define c_ATP_Dictionary_keySize    127
 
-/* Enumeration: ATP_ValueType
-The data types that a dictionary entry may hold.
-
-Values:
-    e_ATP_ValueType_none   - Newly created or recently cleared entry.
-    e_ATP_ValueType_string - Variable length string.
-    e_ATP_ValueType_uint   - Unsigned integer.
-    e_ATP_ValueType_int    - Signed integer.
-    e_ATP_ValueType_double - Floating point value.
-    e_ATP_ValueType_bool   - Boolean value.
-    e_ATP_ValueType_dict   - Sub-dictionary.
-    e_ATP_ValueType_array  - Array of other values.
-*/
-typedef enum ATP_ValueType
-{
-    e_ATP_ValueType_none,
-    e_ATP_ValueType_string,
-    e_ATP_ValueType_uint,
-    e_ATP_ValueType_int,
-    e_ATP_ValueType_double,
-    e_ATP_ValueType_bool,
-    e_ATP_ValueType_dict,
-    e_ATP_ValueType_array
-} ATP_ValueType;
-
-/* Type: ATP_Dictionary
-Reference to a dictionary implementation.
-*/
-typedef struct ATP_DictionaryImpl *ATP_Dictionary;
 /* Type: ATP_DictionaryIterator
 Iterator type for traversing a dictionary's entries.
 */
 typedef struct ATP_DictionaryImpl *ATP_DictionaryIterator;
-
-/* Function: ATP_valueTypeToString
-Convert a value type into a human readable name.
-
-Parameters:
-    p_type - The type enum value.
-
-Returns:
-    The corresponding name.
-*/
-EXPORT const char *ATP_valueTypeToString(ATP_ValueType p_type);
 
 /* Function: ATP_dictionaryInit
 Initialize a dictionary instance.
@@ -93,7 +62,7 @@ Parameters:
 Returns:
     The new copy of the dictionary.
 */
-EXPORT ATP_Dictionary ATP_dictionaryDuplicate(ATP_Dictionary *p_dict);
+EXPORT ATP_Dictionary ATP_dictionaryDuplicate(const ATP_Dictionary *p_dict);
 
 /* Function: ATP_dictionaryRemove
 Remove an entry from the dictionary.
@@ -171,8 +140,10 @@ Returns:
 EXPORT int ATP_dictionarySetBool(ATP_Dictionary *p_dict, const char *p_key, int p_value);
 /* Function: ATP_dictionarySetDict
 Set the value of a given entry to be the provided dictionary.  The entry is created if it does not exist.
-If it does exist then the old value and type are discarded and replaced with the new ones.  The dictionary
-takes over ownership of the sub-dictionary.
+If it does exist then the old value and type are discarded and replaced with the new ones.
+
+Note:
+    The dictionary takes over ownership of the sub-dictionary.
 
 Parameters:
     p_dict  - The dictionary handle.
@@ -183,6 +154,22 @@ Returns:
     1 on success, 0 on failure.
 */
 EXPORT int ATP_dictionarySetDict(ATP_Dictionary *p_dict, const char *p_key, ATP_Dictionary p_value);
+/* Function: ATP_dictionarySetArray
+Set the value of a given entry to be the provided array.  The entry is created if it does not exist.
+If it does exist then the old value and type are discarded and replaced with the new ones.
+
+Note:
+    The dictionary takes over ownership of the array.
+
+Parameters:
+    p_dict  - The dictionary handle.
+    p_key   - The key of the dictionary entry to set.
+    p_value - The value to store in the dictionary entry.
+
+Returns:
+    1 on success, 0 on failure.
+*/
+EXPORT int ATP_dictionarySetArray(ATP_Dictionary *p_dict, const char *p_key, ATP_Array p_value);
 
 /* Function: ATP_dictionaryGetString
 Get the value of a given string entry.
@@ -257,6 +244,18 @@ Returns:
     1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
 */
 EXPORT int ATP_dictionaryGetDict(ATP_Dictionary *p_dict, const char *p_key, ATP_Dictionary **p_value);
+/* Function: ATP_dictionaryGetArray
+Get the value of a given array entry.
+
+Parameters:
+    p_dict  - The dictionary handle.
+    p_key   - The key of the dictionary entry to get.
+    p_value - The location to store the value from the dictionary entry in.
+
+Returns:
+    1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
+*/
+EXPORT int ATP_dictionaryGetArray(ATP_Dictionary *p_dict, const char *p_key, ATP_Array **p_value);
 
 /* Function: ATP_dictionaryBegin
 Create an iterator pointing to the beginning of a dictionary.
@@ -310,7 +309,7 @@ Returns:
 */
 EXPORT const char *ATP_dictionaryGetKey(ATP_DictionaryIterator p_iterator);
 /* Function: ATP_dictionaryGetType
-Get the dictionary value type for the current entry.
+Get the value type for the current entry.
 
 Parameters:
     p_iterator - The iterator instance.
@@ -384,6 +383,9 @@ EXPORT int ATP_dictionaryItSetBool(ATP_DictionaryIterator p_iterator, int p_valu
 Set the value of a given entry to be the provided dictionary.  The entry is created if it does not exist.
 If it does exist then the old value and type are discarded and replaced with the new ones.
 
+Note:
+    The dictionary takes over ownership of the sub-dictionary.
+
 Parameters:
     p_iterator - The iterator pointing to the entry.
     p_value    - The value to store in the dictionary entry.
@@ -392,6 +394,21 @@ Returns:
     1 on success, 0 on failure.
 */
 EXPORT int ATP_dictionaryItSetDict(ATP_DictionaryIterator p_iterator, ATP_Dictionary p_value);
+/* Function: ATP_dictionaryItSetDict
+Set the value of a given entry to be the provided array.  The entry is created if it does not exist.
+If it does exist then the old value and type are discarded and replaced with the new ones.
+
+Note:
+    The dictionary takes over ownership of the array.
+
+Parameters:
+    p_iterator - The iterator pointing to the entry.
+    p_value    - The value to store in the dictionary entry.
+
+Returns:
+    1 on success, 0 on failure.
+*/
+EXPORT int ATP_dictionaryItSetArray(ATP_DictionaryIterator p_iterator, ATP_Array p_value);
 
 /* Function: ATP_dictionaryItGetString
 Get the value of a given unsigned integer entry.
@@ -460,5 +477,17 @@ Returns:
     1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
 */
 EXPORT int ATP_dictionaryItGetDict(ATP_DictionaryIterator p_iterator, ATP_Dictionary **p_value);
+
+/* Function: ATP_dictionaryItGetArray
+Get the value of a given array entry.
+
+Parameters:
+    p_iterator - The iterator pointing to the entry.
+    p_value    - The location to store the value from the dictionary entry in.
+
+Returns:
+    1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
+*/
+EXPORT int ATP_dictionaryItGetArray(ATP_DictionaryIterator p_iterator, ATP_Array **p_value);
 
 #endif /* _ATP_LIBRARY_DICTIONARY_H_ */

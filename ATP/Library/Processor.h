@@ -22,7 +22,7 @@ Parameters:
 Returns:
     1 if the processor was loaded successfully, 0 otherwise.
 */
-typedef int (*ATP_ProcessorLoadCallback)(int p_index, const ATP_CmdLineParam *p_parameters, struct ATP_ProcessorInterface *p_interface);
+typedef int (*ATP_ProcessorLoadCallback)(unsigned int p_index, const ATP_Array *p_parameters, struct ATP_ProcessorInterface *p_interface);
 /* Callback: ATP_ProcessorRunCallback
 Invoked to run the processor.  The processor takes in a dictionary (which may be empty), and uses its contents to populate another dictionary
 (which may also be empty).  The processor may also use the command line parameters passed to it in <ATP_ProcessorLoadCallback>, and data loaded
@@ -37,7 +37,7 @@ Parameters:
 Returns:
     1 if the processor ran successfully, 0 if it did not.
 */
-typedef int (*ATP_ProcessorRunCallback)(int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output, void *p_token);
+typedef int (*ATP_ProcessorRunCallback)(unsigned int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output, void *p_token);
 /* Callback: ATP_ProcessorUnloadCallback
 Invoked to unload the processor.  This callback should free resources used internally by the processor.
 
@@ -103,7 +103,7 @@ Parameters:
 Returns:
     A new processor instance.
 */
-EXPORT ATP_Processor *ATP_processorLoad(int p_index, const char *p_name, const ATP_CmdLineParam *p_parameters);
+EXPORT ATP_Processor *ATP_processorLoad(unsigned int p_index, const char *p_name, const ATP_Array *p_parameters);
 /* Function: ATP_processorRun
 Run the processor, handling the given input and producing output.
 
@@ -116,7 +116,7 @@ Parameters:
 Returns:
     1 if the processor ran successfully, 0 if it did not.
 */
-EXPORT int ATP_processorRun(ATP_Processor *p_proc, int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output);
+EXPORT int ATP_processorRun(ATP_Processor *p_proc, unsigned int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output);
 /* Function: ATP_processorUnload
 Unload the processor, freeing resources as necessary and deleting the processor instance structure.
 

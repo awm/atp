@@ -23,7 +23,7 @@ static void usage(void)
     ATP_processorsList();
 }
 
-static int run(int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output, void *p_token)
+static int run(unsigned int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output, void *p_token)
 {
     if (p_count == 1)
     {
@@ -39,7 +39,7 @@ static void unload(void *p_token)
     // do nothing
 }
 
-int help_load(int p_index, const ATP_CmdLineParam *p_parameters, struct ATP_ProcessorInterface *p_interface)
+int help_load(unsigned int p_index, const ATP_Array *p_parameters, struct ATP_ProcessorInterface *p_interface)
 {
     p_interface->m_token = NULL;
     p_interface->run = &run;

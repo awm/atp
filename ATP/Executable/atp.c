@@ -4,12 +4,14 @@
 #include "ATP/Library/Exit.h"
 #include "ATP/Library/Log.h"
 
+#include "ATP/ThirdParty/UT/utlist.h"
+
 #include <stdlib.h>
 #include <string.h>
 
 // import static processors
-extern int help_load(int p_index, const ATP_CmdLineParam *p_parameters, ATP_ProcessorInterface *p_interface);
-extern int random_load(int p_index, const ATP_CmdLineParam *p_parameters, ATP_ProcessorInterface *p_interface);
+extern int help_load(unsigned int p_index, const ATP_Array *p_parameters, ATP_ProcessorInterface *p_interface);
+extern int random_load(unsigned int p_index, const ATP_Array *p_parameters, ATP_ProcessorInterface *p_interface);
 
 // static processor lookup table
 static ATP_StaticProcessor gs_staticProcessors[] =
@@ -17,21 +19,6 @@ static ATP_StaticProcessor gs_staticProcessors[] =
     { "help", &help_load },
     { "random", &random_load },
 };
-
-static void cleanupParams(ATP_CmdLineParam *p_parameters)
-{
-    ATP_CmdLineParam *it = NULL;
-    ATP_CmdLineParam *l_tmp = NULL;
-
-    if (p_parameters != NULL)
-    {
-        LL_FOREACH_SAFE(p_parameters, it, l_tmp)
-        {
-            LL_DELETE(p_parameters, it);
-            free(it);
-        }
-    }
-}
 
 static void cleanupProcessors(ATP_Processor *p_processors)
 {
@@ -50,9 +37,9 @@ static void cleanupProcessors(ATP_Processor *p_processors)
 
 int main(int argc, char **argv)
 {
-    int l_count = 0;
+    unsigned int l_count = 0;
     char *l_name = NULL;
-    ATP_CmdLineParam *l_parameters = NULL;
+    ATP_Array l_parameters;
     ATP_Processor *l_processors = NULL;
     ATP_Processor *it = NULL;
     ATP_Dictionary l_input;
@@ -66,23 +53,24 @@ int main(int argc, char **argv)
 
     // parse command line and load processors
     ATP_processorsSetStatic(gs_staticProcessors, ARRAYLEN(gs_staticProcessors));
+    ATP_arrayInit(&l_parameters);
     while (ATP_commandLineGet(argc, argv, l_count, &l_name, &l_parameters))
     {
         ATP_Processor *l_proc;
         strncat(l_pipeline, (l_count > 0 ? " > " : " "), sizeof(l_pipeline) - strlen(l_pipeline) - 1);
         strncat(l_pipeline, l_name, sizeof(l_pipeline) - strlen(l_pipeline) - 1);
 
-        l_proc = ATP_processorLoad(l_count, l_name, l_parameters);
+        l_proc = ATP_processorLoad(l_count, l_name, &l_parameters);
         if (l_proc == NULL)
         {
-            cleanupParams(l_parameters);
+            ATP_arrayDestroy(&l_parameters);
             cleanupProcessors(l_processors);
             return EX_USAGE;
         }
         LL_APPEND(l_processors, l_proc);
 
         ++l_count;
-        cleanupParams(l_parameters);
+        ATP_arrayClear(&l_parameters);
     }
     if (l_count == 0)
     {

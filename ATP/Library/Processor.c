@@ -133,7 +133,7 @@ void ATP_processorsSetStatic(ATP_StaticProcessor p_table[], unsigned int p_count
     gs_staticProcessorCount = p_count;
 }
 
-ATP_Processor *ATP_processorLoad(int p_index, const char *p_name, const ATP_CmdLineParam *p_parameters)
+ATP_Processor *ATP_processorLoad(unsigned int p_index, const char *p_name, const ATP_Array *p_parameters)
 {
     unsigned int i;
 
@@ -205,7 +205,7 @@ ATP_Processor *ATP_processorLoad(int p_index, const char *p_name, const ATP_CmdL
     return NULL;
 }
 
-int ATP_processorRun(ATP_Processor *p_proc, int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output)
+int ATP_processorRun(ATP_Processor *p_proc, unsigned int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output)
 {
     if (p_proc != NULL)
     {

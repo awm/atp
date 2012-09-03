@@ -29,7 +29,8 @@ PREFIX=`dirname \\\${0}`
 
 GDBCMD=
 if \\\[ [get_attr GDB 0] -eq 1 ]; then
-    echo 'run' > \\"\\\${PREFIX}/atp.gdb\\"
+    echo 'set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib
+run' > \\"\\\${PREFIX}/atp.gdb\\"
     GDBCMD=\\"gdb -quiet -command=\\\${PREFIX}/atp.gdb --args\\"
 fi
 

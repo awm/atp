@@ -5,23 +5,7 @@ Command line parsing routines for ATP.
 #define _ATP_LIBRARY_COMMANDLINE_H_
 
 #include "Export.h"
-
-#include "ATP/ThirdParty/UT/utlist.h"
-
-/* Structure: ATP_CmdLineParam
-Linked list item for a single command line parameter.
-*/
-typedef struct ATP_CmdLineParam
-{
-    /* Variable: m_parameter
-    The command line parameter.
-    */
-    const char *m_parameter;
-    /* Variable: next
-    The next item in the linked list.
-    */
-    struct ATP_CmdLineParam *next;
-} ATP_CmdLineParam;
+#include "Array.h"
 
 /* Function: ATP_commandLineGet
 Get the command line parameters for a single processor.
@@ -31,11 +15,11 @@ Parameters:
     argv         - The array of command line parameters.
     p_proc       - The index of the processor being handled now.
     p_name       - A pointer to set to the name of the processor, as parsed from the command line.
-    p_parameters - A pointer to set to the linked list of parameters for this processor.
+    p_parameters - An initialized array to fill with the parameters for this processor.
 
 Returns:
     1 if parsing was successful, 0 if it was not.
 */
-EXPORT int ATP_commandLineGet(int argc, char **argv, int p_proc, char **p_name, ATP_CmdLineParam **p_parameters);
+EXPORT int ATP_commandLineGet(int argc, char **argv, unsigned int p_proc, char **p_name, ATP_Array *p_parameters);
 
 #endif /* _ATP_LIBRARY_COMMANDLINE_H_ */

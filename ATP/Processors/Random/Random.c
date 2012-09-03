@@ -278,7 +278,7 @@ static int randomDictionary(ATP_Dictionary *p_dict, const Settings *p_settings, 
     return 1;
 }
 
-static int run(int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output, void *p_token)
+static int run(unsigned int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_output, void *p_token)
 {
     Settings *l_settings = p_token;
     if (ATP_processorHelpRequested())
@@ -315,15 +315,23 @@ static int stringIsNumber(const char *p_string)
 }
 
 #ifdef ATTR_STATIC_PROCESSORS
-int random_load(int p_index, const ATP_CmdLineParam *p_parameters, struct ATP_ProcessorInterface *p_interface)
+int random_load(unsigned int p_index, const ATP_Array *p_parameters, struct ATP_ProcessorInterface *p_interface)
 #else
-int load(int p_index, const ATP_CmdLineParam *p_parameters, struct ATP_ProcessorInterface *p_interface)
+int load(unsigned int p_index, const ATP_Array *p_parameters, struct ATP_ProcessorInterface *p_interface)
 #endif
 {
-    unsigned int l_argc = 0;
-    const ATP_CmdLineParam *it;
+    unsigned int i;
+    Settings *l_settings;
 
-    Settings *l_settings = malloc(sizeof(Settings));
+    unsigned int l_count = ATP_arrayLength(p_parameters);
+    if (!ATP_processorHelpRequested() && l_count != 3)
+    {
+        ERR(PROCNAME ": wrong number of parameters\n");
+        usage();
+        return 0;
+    }
+
+    l_settings = malloc(sizeof(Settings));
     if (l_settings == NULL)
     {
         PERR();
@@ -331,39 +339,36 @@ int load(int p_index, const ATP_CmdLineParam *p_parameters, struct ATP_Processor
     }
     memset(l_settings, 0, sizeof(Settings));
 
-    LL_FOREACH(p_parameters, it)
+    for (i = 0; i < l_count; ++i)
     {
-        if (!stringIsNumber(it->m_parameter))
+        const char *l_parameter = NULL;
+        if (!ATP_arrayGetString(p_parameters, i, &l_parameter))
         {
             free(l_settings);
-            ERR(PROCNAME ": '%s' is not a valid parameter\n", it->m_parameter);
+            usage();
+            return 0;
+        }
+        DBG(PROCNAME ": parameter %u is '%s'\n", i, l_parameter);
+
+        if (!stringIsNumber(l_parameter))
+        {
+            free(l_settings);
+            ERR(PROCNAME ": '%s' is not a valid parameter\n", l_parameter);
             usage();
             return 0;
         }
 
-        switch (l_argc)
+        switch (i)
         {
             case 0:
-                l_settings->m_minEntries = atoi(it->m_parameter);
+                l_settings->m_minEntries = atoi(l_parameter);
                 break;
             case 1:
-                l_settings->m_maxEntries = atoi(it->m_parameter);
+                l_settings->m_maxEntries = atoi(l_parameter);
                 break;
             case 2:
-                l_settings->m_maxDepth = atoi(it->m_parameter);
+                l_settings->m_maxDepth = atoi(l_parameter);
                 break;
-        }
-
-        ++l_argc;
-    }
-    if (!ATP_processorHelpRequested())
-    {
-        if (l_argc != 3)
-        {
-            free(l_settings);
-            ERR(PROCNAME ": wrong number of parameters\n");
-            usage();
-            return 0;
         }
     }
 

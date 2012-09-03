@@ -35,9 +35,14 @@ void ATP_arrayDestroy(ATP_Array *p_array)
     utarray_free(CAST(p_array));
 }
 
-unsigned int ATP_arrayLength(ATP_Array *p_array)
+void ATP_arrayClear(ATP_Array *p_array)
 {
-    return utarray_len(CAST(p_array));
+    utarray_clear(CAST(p_array));
+}
+
+unsigned int ATP_arrayLength(const ATP_Array *p_array)
+{
+    return utarray_len(CCAST(p_array));
 }
 
 int ATP_arrayErase(ATP_Array *p_array, unsigned int p_index)
@@ -52,9 +57,9 @@ int ATP_arrayErase(ATP_Array *p_array, unsigned int p_index)
     return 1;
 }
 
-ATP_ValueType ATP_arrayGetType(ATP_Array *p_array, unsigned int p_index)
+ATP_ValueType ATP_arrayGetType(const ATP_Array *p_array, unsigned int p_index)
 {
-    Value *l_entry = (Value *) utarray_eltptr(CAST(p_array), p_index);
+    Value *l_entry = (Value *) utarray_eltptr(CCAST(p_array), p_index);
     if (l_entry == NULL)
     {
         ERR("Index out of bounds\n");
@@ -192,9 +197,9 @@ int ATP_arraySetArray(ATP_Array *p_array, unsigned int p_index, ATP_Array p_valu
     return 1;
 }
 
-int ATP_arrayGetString(ATP_Array *p_array, unsigned int p_index, const char **p_value)
+int ATP_arrayGetString(const ATP_Array *p_array, unsigned int p_index, const char **p_value)
 {
-    Value *l_entry = (Value *) utarray_eltptr(CAST(p_array), p_index);
+    Value *l_entry = (Value *) utarray_eltptr(CCAST(p_array), p_index);
     if (l_entry == NULL)
     {
         ERR("Index out of bounds\n");
@@ -209,9 +214,9 @@ int ATP_arrayGetString(ATP_Array *p_array, unsigned int p_index, const char **p_
     return 0;
 }
 
-int ATP_arrayGetUint(ATP_Array *p_array, unsigned int p_index, unsigned long long *p_value)
+int ATP_arrayGetUint(const ATP_Array *p_array, unsigned int p_index, unsigned long long *p_value)
 {
-    Value *l_entry = (Value *) utarray_eltptr(CAST(p_array), p_index);
+    Value *l_entry = (Value *) utarray_eltptr(CCAST(p_array), p_index);
     if (l_entry == NULL)
     {
         ERR("Index out of bounds\n");
@@ -226,9 +231,9 @@ int ATP_arrayGetUint(ATP_Array *p_array, unsigned int p_index, unsigned long lon
     return 0;
 }
 
-int ATP_arrayGetInt(ATP_Array *p_array, unsigned int p_index, signed long long *p_value)
+int ATP_arrayGetInt(const ATP_Array *p_array, unsigned int p_index, signed long long *p_value)
 {
-    Value *l_entry = (Value *) utarray_eltptr(CAST(p_array), p_index);
+    Value *l_entry = (Value *) utarray_eltptr(CCAST(p_array), p_index);
     if (l_entry == NULL)
     {
         ERR("Index out of bounds\n");
@@ -243,9 +248,9 @@ int ATP_arrayGetInt(ATP_Array *p_array, unsigned int p_index, signed long long *
     return 0;
 }
 
-int ATP_arrayGetDouble(ATP_Array *p_array, unsigned int p_index, double *p_value)
+int ATP_arrayGetDouble(const ATP_Array *p_array, unsigned int p_index, double *p_value)
 {
-    Value *l_entry = (Value *) utarray_eltptr(CAST(p_array), p_index);
+    Value *l_entry = (Value *) utarray_eltptr(CCAST(p_array), p_index);
     if (l_entry == NULL)
     {
         ERR("Index out of bounds\n");
@@ -260,9 +265,9 @@ int ATP_arrayGetDouble(ATP_Array *p_array, unsigned int p_index, double *p_value
     return 0;
 }
 
-int ATP_arrayGetBool(ATP_Array *p_array, unsigned int p_index, int *p_value)
+int ATP_arrayGetBool(const ATP_Array *p_array, unsigned int p_index, int *p_value)
 {
-    Value *l_entry = (Value *) utarray_eltptr(CAST(p_array), p_index);
+    Value *l_entry = (Value *) utarray_eltptr(CCAST(p_array), p_index);
     if (l_entry == NULL)
     {
         ERR("Index out of bounds\n");
@@ -277,9 +282,9 @@ int ATP_arrayGetBool(ATP_Array *p_array, unsigned int p_index, int *p_value)
     return 0;
 }
 
-int ATP_arrayGetDict(ATP_Array *p_array, unsigned int p_index, ATP_Dictionary **p_value)
+int ATP_arrayGetDict(const ATP_Array *p_array, unsigned int p_index, ATP_Dictionary **p_value)
 {
-    Value *l_entry = (Value *) utarray_eltptr(CAST(p_array), p_index);
+    Value *l_entry = (Value *) utarray_eltptr(CCAST(p_array), p_index);
     if (l_entry == NULL)
     {
         ERR("Index out of bounds\n");
@@ -294,9 +299,9 @@ int ATP_arrayGetDict(ATP_Array *p_array, unsigned int p_index, ATP_Dictionary **
     return 0;
 }
 
-int ATP_arrayGetArray(ATP_Array *p_array, unsigned int p_index, ATP_Array **p_value)
+int ATP_arrayGetArray(const ATP_Array *p_array, unsigned int p_index, ATP_Array **p_value)
 {
-    Value *l_entry = (Value *) utarray_eltptr(CAST(p_array), p_index);
+    Value *l_entry = (Value *) utarray_eltptr(CCAST(p_array), p_index);
     if (l_entry == NULL)
     {
         ERR("Index out of bounds\n");

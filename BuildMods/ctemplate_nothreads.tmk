@@ -1,0 +1,6 @@
+namespace eval cxx {}
+namespace eval link {}
+
+lappend link::LIBPATH [file join $::PROJROOT ATP ThirdParty ctemplate $::TARGET_OS $::TARGET_ARCH]
+lappend cxx::PROJINCS [file join $::PROJROOT ATP ThirdParty ctemplate]
+lconcat link::SYSLIBS { ctemplate_nothreads }

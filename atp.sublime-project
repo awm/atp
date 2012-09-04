@@ -11,6 +11,7 @@
         "sublimeclang_options":
         [
             "-I${folder:${project_path:atp.sublime-project}}",
+            "-I${folder:${project_path:atp.sublime-project}}/ATP/ThirdParty/ctemplate",
             "-DJSON_DEBUG"
         ]
     }

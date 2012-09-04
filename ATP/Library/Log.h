@@ -33,6 +33,11 @@ Debug messages will only be printed in debug builds.
     #define DBG(...)    ATP_logDbg(__FILE__, __LINE__, __VA_ARGS__)
 #endif
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /* Function: ATP_log
 Log a message to stdout.
 
@@ -61,5 +66,9 @@ Parameters:
     ...      - The format parameters.
 */
 EXPORT void ATP_logDbg(const char *p_file, unsigned int p_line, const char *p_format, ...);
+
+#ifdef __cplusplus
+}   /* extern "C" */
+#endif
 
 #endif /* _ATP_LIBRARY_LOG_H_ */

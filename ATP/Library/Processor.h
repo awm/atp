@@ -90,6 +90,18 @@ typedef struct ATP_Processor
     struct ATP_Processor *next;
 } ATP_Processor;
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/* Function: ATP_processorsSetStatic
+Set the list of available static processors.  This list will be searched later when a processor is requested.
+
+Parameters:
+    p_table - The table of available static processors.
+    p_count - The number of entries in the table.
+*/
 EXPORT void ATP_processorsSetStatic(ATP_StaticProcessor p_table[], unsigned int p_count);
 
 /* Function: ATP_processorLoad
@@ -133,5 +145,9 @@ Returns:
     1 if help is requested, 0 if it is not.
 */
 EXPORT int ATP_processorHelpRequested(void);
+
+#ifdef __cplusplus
+}   /* extern "C" */
+#endif
 
 #endif /* _ATP_LIBRARY_PROCESSOR_H_ */

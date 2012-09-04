@@ -31,6 +31,11 @@ typedef enum ATP_ValueType
     e_ATP_ValueType_array
 } ATP_ValueType;
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /* Function: ATP_valueTypeToString
 Convert a value type into a human readable name.
 
@@ -42,5 +47,8 @@ Returns:
 */
 EXPORT const char *ATP_valueTypeToString(ATP_ValueType p_type);
 
+#ifdef __cplusplus
+}   /* extern "C" */
+#endif
 
 #endif /* _ATP_LIBRARY_VALUE_H_ */

@@ -7,4 +7,6 @@ Utilities and values for program termination.
 #include <stdlib.h>
 #include <sysexits.h>
 
+// TODO: Windows implementation
+
 #endif /* _ATP_LIBRARY_EXIT_H_ */

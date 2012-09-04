@@ -26,6 +26,11 @@ Calculate the number of elements in a statically allocated array.
 */
 #define ARRAYLEN(array) (sizeof(array) / sizeof((array)[0]))
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /* Function: ATP_arrayInit
 Initialize an array instance.
 
@@ -283,5 +288,9 @@ Returns:
     1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
 */
 EXPORT int ATP_arrayGetArray(const ATP_Array *p_array, unsigned int p_index, ATP_Array **p_value);
+
+#ifdef __cplusplus
+}   /* extern "C" */
+#endif
 
 #endif /* _ATP_LIBRARY_ARRAY_H_ */

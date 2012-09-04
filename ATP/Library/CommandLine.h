@@ -7,6 +7,11 @@ Command line parsing routines for ATP.
 #include "Export.h"
 #include "Array.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /* Function: ATP_commandLineGet
 Get the command line parameters for a single processor.
 
@@ -21,5 +26,9 @@ Returns:
     1 if parsing was successful, 0 if it was not.
 */
 EXPORT int ATP_commandLineGet(int argc, char **argv, unsigned int p_proc, char **p_name, ATP_Array *p_parameters);
+
+#ifdef __cplusplus
+}   /* extern "C" */
+#endif
 
 #endif /* _ATP_LIBRARY_COMMANDLINE_H_ */

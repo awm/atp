@@ -28,6 +28,11 @@ Iterator type for traversing a dictionary's entries.
 */
 typedef struct ATP_DictionaryImpl *ATP_DictionaryIterator;
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /* Function: ATP_dictionaryInit
 Initialize a dictionary instance.
 
@@ -489,5 +494,9 @@ Returns:
     1 on success, 0 on failure.  In particular, if the entry does not exist or is of the wrong type then 0 will be returned.
 */
 EXPORT int ATP_dictionaryItGetArray(ATP_DictionaryIterator p_iterator, ATP_Array **p_value);
+
+#ifdef __cplusplus
+}   /* extern "C" */
+#endif
 
 #endif /* _ATP_LIBRARY_DICTIONARY_H_ */

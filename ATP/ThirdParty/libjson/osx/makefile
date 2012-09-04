@@ -132,7 +132,7 @@ OS=$(shell uname)
 
 # Defaults
 ifeq ($(OS), Darwin)
-	cxxflags_default = -fast -ffast-math -fexpensive-optimizations -DNDEBUG
+	cxxflags_default = -fast -ffast-math -fexpensive-optimizations -DNDEBUG -arch i386 -arch x86_64
 else
 	cxxflags_default = -O3 -ffast-math -fexpensive-optimizations -DNDEBUG
 endif
@@ -157,6 +157,7 @@ includedir      ?= include
 srcdir          ?= _internal/Source
 CXX             ?= c++
 AR              ?= ar
+LIBTOOL			?= libtool
 PIC             ?= PIC
 BUILD_TYPE      ?= "default"
 SHARED          ?= "1"
@@ -230,7 +231,11 @@ else
 $(lib_target): banner installdirs $(addprefix $(objdir)/, $(objects))
 	@echo "Archive"
 	cd $(objdir) ; \
-	$(AR) -cvq $@ $(objects) ; \
+	if test "$(OS)" = "Darwin" ; then \
+		$(LIBTOOL) -static -s -o $@ - $(objects) ; \
+	else \
+		$(AR) -cvq $@ $(objects) ; \
+	fi ; \
 	mv -f $@ ../
 	@echo "Archive: Done"
 endif
@@ -242,6 +247,7 @@ $(objdir)/%.o: $(srcdir)/%.cpp
 ifeq ($(SHARED),1)
 install: banner install_headers $(lib_target)
 	@echo "Install shared library"
+	mkdir -p $(inst_path)
 	cp -f ./$(lib_target) $(inst_path)
 	cd $(inst_path) ; \
 	ln -sf $(lib_target) $(libname_shared_major_version) ; \
@@ -253,6 +259,7 @@ endif
 else
 install: banner install_headers $(lib_target)
 	@echo "Install static library"
+	mkdir -p $(inst_path)
 	cp -f ./$(lib_target) $(inst_path)
 	@echo "Install static library: Done."
 endif

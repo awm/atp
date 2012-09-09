@@ -506,7 +506,7 @@ static int readJson(const char *p_filename, ATP_Dictionary *p_dest)
     fseek(l_file, 0L, SEEK_END);
     l_fileSize = ftell(l_file);
     fseek(l_file, 0L, SEEK_SET);
-    l_json = malloc(l_fileSize);
+    l_json = malloc(l_fileSize + 1);
     if (l_json == NULL)
     {
         PERR();
@@ -520,14 +520,16 @@ static int readJson(const char *p_filename, ATP_Dictionary *p_dest)
         return 0;
     }
     fclose(l_file);
+    l_json[l_fileSize] = '\0';
+    DBG("raw JSON: %s\n", l_json);
 
     // parse the json
     l_node = json_parse(l_json);
     if (json_type(l_node) != JSON_NODE)
     {
+        ERR(PROCNAME ": Invalid JSON file: %s (type %d is not JSON_NODE)\n", p_filename, json_type(l_node));
         json_delete(l_node);
         free(l_json);
-        ERR("Invalid JSON file: %s\n", p_filename);
         return 0;
     }
 

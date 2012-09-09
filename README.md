@@ -1,7 +1,5 @@
 # ATP
 
-This document contains some preliminary musings and may not accurately reflect the state of the code at the moment.
-
 ## License
 
 Licensed under the terms of the [Modified BSD License](http://opensource.org/licenses/BSD-3-Clause).  See LICENSE.txt for details.
@@ -26,6 +24,6 @@ Generate a random dictionary and print as JSON to stdout:
 
     atp @random 5 10 2 @json write stdout
 
-Load JSON file `some_data.json` and use its data together with the [ctemplate](http://code.google.com/p/ctemplate/) template `my_template.tpl` to produce `output.txt`:
+Load JSON file `basic.json` and use its data together with the [ctemplate](http://code.google.com/p/ctemplate/) template `basic.tpl` to produce `basic.txt`:
 
-    atp @json read some_data.json @ctemplate my_template.tpl output.txt
+    atp @json read basic.json @ctemplate basic.tpl basic.txt

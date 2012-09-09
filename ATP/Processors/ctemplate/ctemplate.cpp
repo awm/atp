@@ -36,15 +36,22 @@ static void usage(void)
 "    Applies the incoming dictionary to the provided template file to produce\n"
 "    the output file\n\n");
     LOG(
-"    Usage: @" PROCNAME " <template_file> <output_file> [annotate] [striplines|stripspace]\n\n");
+"    Usage: @" PROCNAME " <template_file> <output_file> [annotate]\n"
+"               [striplines|stripspace]\n\n");
     LOG(
 "        <template_file> The name of the template file to process\n");
     LOG(
-"          <output_file> The name of the file to write the template result to\n\n");
+"          <output_file> The name of the file to write the template result to\n");
+    LOG(
+"               annotate Annotate the output file with debug information\n");
+    LOG(
+"             striplines Strip blank lines from the template\n");
+    LOG(
+"             stripspace Strip leading and trailing white space from the template\n\n");
 }
 
 template <typename T>
-static std::string toString(const T& p_item)
+static std::string toString(const T &p_item)
 {
     std::stringstream l_stream;
     l_stream << p_item;
@@ -205,6 +212,8 @@ static int run(unsigned int p_count, ATP_Dictionary *p_input, ATP_Dictionary *p_
 
         l_outfile << l_result;
         l_outfile.close();
+
+        *p_output = *p_input;
     }
 
     return 1;

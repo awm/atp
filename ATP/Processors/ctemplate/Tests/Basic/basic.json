@@ -1,0 +1,10 @@
+{
+    "NAME": "Andrew",
+    "ITEMS":
+    [
+        { "IS_LAST": false },
+        { "IS_LAST": false },
+        { "IS_LAST": true }
+    ],
+    "EMPTY_SECTION": {}
+}

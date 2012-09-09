@@ -9,6 +9,7 @@ set link::PROJLIBS {
 
 set dep::PROJLIBS {
     ATP/Processors/JSON
+    ATP/Processors/ctemplate
 }
 
 when_target osx {

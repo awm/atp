@@ -1,0 +1,3 @@
+module { cxx ctemplate_nothreads atp dynamiclib }
+
+setLibName ctemplate.processor

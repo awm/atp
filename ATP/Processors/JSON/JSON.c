@@ -1,6 +1,7 @@
 #include "ATP/Library/Processor.h"
 #include "ATP/Library/Log.h"
 #include "ATP/Library/Exit.h"
+#include "ATP/Library/Export.h"
 
 #include "ATP/ThirdParty/libjson/libjson.h"
 
@@ -32,10 +33,10 @@ static void usage(void)
 "    Usage: @" PROCNAME " read stdin|<filename>\n"
 "           @" PROCNAME " write stdout|<filename>\n\n");
     LOG(
-"        stdin      Indicates that the JSON source should be read from stdin\n"
+"             stdin Indicates that the JSON source should be read from stdin\n"
 "                   rather than a file\n");
     LOG(
-"        stdout     Indicates that the JSON source should be written to stdout\n"
+"            stdout Indicates that the JSON source should be written to stdout\n"
 "                   rather than a file\n");
     LOG(
 "        <filename> The name of a file to read the working dictionary from or\n"
@@ -570,7 +571,7 @@ static void unload(void *p_token)
 #ifdef ATTR_STATIC_PROCESSORS
 int json_load(unsigned int p_index, const ATP_Array *p_parameters, struct ATP_ProcessorInterface *p_interface)
 #else
-int load(unsigned int p_index, const ATP_Array *p_parameters, struct ATP_ProcessorInterface *p_interface)
+EXPORT int load(unsigned int p_index, const ATP_Array *p_parameters, struct ATP_ProcessorInterface *p_interface)
 #endif
 {
     unsigned int i;

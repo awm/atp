@@ -174,6 +174,14 @@ ATP_Processor *ATP_processorLoad(unsigned int p_index, const char *p_name, const
                 cleanupPaths(l_paths);
                 return l_proc;
             }
+            else
+            {
+                DBG("No load() in %s\n", l_libPath);
+            }
+        }
+        else
+        {
+            DBG("Could not open %s\n", l_libPath);
         }
     }
     cleanupPaths(l_paths);
@@ -301,7 +309,6 @@ void ATP_processorsList(void)
     {
         char l_libPath[1024];
         snprintf(l_libPath, sizeof(l_libPath), "%s" DIRSEP "*." PROC_EXT, it->m_path);
-        LOG("    %s:\n", it->m_path);
         listExternalProcessors(it->m_path, l_libPath);
     }
     cleanupPaths(l_paths);

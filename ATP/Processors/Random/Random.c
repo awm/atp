@@ -1,6 +1,7 @@
 #include "ATP/Library/Processor.h"
 #include "ATP/Library/Log.h"
 #include "ATP/Library/Exit.h"
+#include "ATP/Library/Export.h"
 
 #include <stdlib.h>
 #include <ctype.h>
@@ -317,7 +318,7 @@ static int stringIsNumber(const char *p_string)
 #ifdef ATTR_STATIC_PROCESSORS
 int random_load(unsigned int p_index, const ATP_Array *p_parameters, struct ATP_ProcessorInterface *p_interface)
 #else
-int load(unsigned int p_index, const ATP_Array *p_parameters, struct ATP_ProcessorInterface *p_interface)
+EXPORT int load(unsigned int p_index, const ATP_Array *p_parameters, struct ATP_ProcessorInterface *p_interface)
 #endif
 {
     unsigned int i;
